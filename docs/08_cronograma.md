@@ -56,11 +56,11 @@
 
 | Tarea | Esfuerzo | Responsable | Entregable |
 |-------|----------|-------------|------------|
-| Setup Django 5 + PostgreSQL | 4h | Dev | Proyecto inicializado |
+| Setup Django 5 + Docker | 4h | Dev | Proyecto inicializado con Docker Compose |
 | Configurar estructura de apps | 4h | Dev | Apps core, fields, events, variables, api |
 | Configurar Git + .gitignore | 2h | Dev | Repositorio configurado |
-| Setup entorno virtual y dependencias | 3h | Dev | requirements.txt |
-| Configurar PostgreSQL + extensiones | 3h | Dev | BD creada con JSONB, PostGIS |
+| Dockerfile + docker-compose.yml | 3h | Dev | Containerización completa |
+| Configurar PostgreSQL + extensiones | 3h | Dev | BD en contenedor con JSONB |
 | Configurar Django settings (dev/prod) | 4h | Dev | settings.py modular |
 
 **Entregables**: Proyecto Django funcional con BD conectada
@@ -373,15 +373,16 @@ Semana 1 ──→ Semana 2 ──→ Semana 3
 
 ### 6.2 Infraestructura
 
-- **Desarrollo**: Laptop con 16GB RAM, Python 3.11+, PostgreSQL 15+
-- **Staging**: VPS/VM (2GB RAM, 2 vCPU)
-- **Producción**: Servidor Linux (4GB RAM, 2 vCPU)
+- **Desarrollo**: Laptop con 16GB RAM, Docker Desktop
+- **Staging**: Docker Compose en VPS/VM (2GB RAM, 2 vCPU)
+- **Producción**: Docker Compose en servidor Linux (4GB RAM, 2 vCPU)
 
 ### 6.3 Software
 
 - Python 3.11+
 - Django 5.0
 - PostgreSQL 15+
+- Docker + Docker Compose
 - Git
 - IDE (VS Code/PyCharm)
 

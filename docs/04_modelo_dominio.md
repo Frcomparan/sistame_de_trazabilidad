@@ -20,10 +20,7 @@ ENTITY Field {
   + name: String
   + code: String {unique}
   + surface_ha: Decimal
-  + location: String
-  + latitude: Decimal
-  + longitude: Decimal
-  + geometry: GeoJSON
+  + notes: Text
   + is_active: Boolean
   + created_at: DateTime
   + updated_at: DateTime
@@ -42,6 +39,7 @@ ENTITY Campaign {
   + notes: Text
   + is_active: Boolean
   + created_at: DateTime
+  + updated_at: DateTime
   --
   + is_current(): Boolean
   + get_total_events(): Integer
@@ -52,8 +50,7 @@ ENTITY Station {
   + name: String
   + field: Field
   + station_type: String
-  + latitude: Decimal
-  + longitude: Decimal
+  + notes: Text
   + is_operational: Boolean
   + installed_at: Date
   + created_at: DateTime
@@ -200,10 +197,7 @@ User "*" -- "1" Role : has
 | name | String(100) | Nombre del lote | Requerido, único en organización |
 | code | String(50) | Código alfanumérico | Requerido, único |
 | surface_ha | Decimal(10,4) | Superficie en hectáreas | > 0 |
-| location | String(200) | Descripción textual ubicación | Opcional |
-| latitude | Decimal(9,6) | Latitud GPS | Rango -90 a 90 |
-| longitude | Decimal(9,6) | Longitud GPS | Rango -180 a 180 |
-| geometry | GeoJSON | Polígono del lote | Opcional, formato GeoJSON |
+| notes | Text | Descripción o datos extra del campo | Opcional |
 | is_active | Boolean | Estado del lote | Default True |
 
 **Métodos de Negocio**:
@@ -214,7 +208,6 @@ User "*" -- "1" Role : has
 **Reglas de Negocio**:
 - Un lote no puede eliminarse si tiene eventos asociados (eliminación lógica)
 - El código debe ser único dentro de la organización
-- Si tiene geometría, debe ser un polígono válido
 
 ### 3.2 Campaign (Campaña/Temporada)
 
@@ -253,8 +246,7 @@ User "*" -- "1" Role : has
 | name | String(100) | Nombre | Requerido |
 | field | FK(Field) | Lote asociado | Requerido |
 | station_type | String(50) | Tipo | clima/suelo/multivariable |
-| latitude | Decimal(9,6) | Latitud | Requerido |
-| longitude | Decimal(9,6) | Longitud | Requerido |
+| notes | Text | Descripción o datos extra de la estación | Opcional |
 | is_operational | Boolean | Estado operativo | Default True |
 | installed_at | Date | Fecha instalación | Opcional |
 
@@ -264,7 +256,6 @@ User "*" -- "1" Role : has
 - `check_status()`: Verifica si está enviando datos
 
 **Reglas de Negocio**:
-- Una estación debe estar dentro del polígono del lote (si existe geometría)
 - Debe tener al menos una variable asociada para considerarse operativa
 
 ### 3.4 EventType (Tipo de Evento)
@@ -583,7 +574,6 @@ AUDIT_ACTIONS = [
 
 **Field**:
 - `surface_ha > 0`
-- Si `geometry` existe, debe ser un polígono válido
 
 **Campaign**:
 - `end_date >= start_date`

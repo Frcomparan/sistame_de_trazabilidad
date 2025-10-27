@@ -13,17 +13,16 @@ Este documento especifica el esquema físico de la base de datos PostgreSQL, inc
 **Razones de Selección**:
 - ✅ Soporte nativo de **JSONB** (crítico para eventos dinámicos)
 - ✅ **Índices GIN** para consultas eficientes en JSONB
-- ✅ **PostGIS** para datos geoespaciales (opcional)
 - ✅ **Transacciones ACID** completas
 - ✅ **Maduro y estable**
 - ✅ **Open source** (sin costos de licenciamiento)
+- ✅ **Docker ready** para despliegue simplificado
 
 ## 3. Configuración Recomendada
 
 ```sql
 -- Extensiones necesarias
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";      -- Para UUIDs
-CREATE EXTENSION IF NOT EXISTS "postgis";        -- Para geometrías (opcional)
 CREATE EXTENSION IF NOT EXISTS "pg_trgm";        -- Para búsqueda de texto
 
 -- Configuración de zona horaria
@@ -42,10 +41,7 @@ CREATE TABLE fields (
     name VARCHAR(100) NOT NULL,
     code VARCHAR(50) NOT NULL UNIQUE,
     surface_ha NUMERIC(10, 4) CHECK (surface_ha > 0),
-    location VARCHAR(200),
-    latitude NUMERIC(9, 6) CHECK (latitude BETWEEN -90 AND 90),
-    longitude NUMERIC(9, 6) CHECK (longitude BETWEEN -180 AND 180),
-    geometry GEOGRAPHY(POLYGON, 4326),  -- PostGIS
+    notes TEXT,
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -54,7 +50,6 @@ CREATE TABLE fields (
 -- Índices
 CREATE INDEX idx_fields_code ON fields(code);
 CREATE INDEX idx_fields_is_active ON fields(is_active);
-CREATE INDEX idx_fields_geometry ON fields USING GIST(geometry);  -- PostGIS
 
 -- Trigger para updated_at
 CREATE TRIGGER update_fields_updated_at
@@ -64,7 +59,6 @@ CREATE TRIGGER update_fields_updated_at
 
 -- Comentarios
 COMMENT ON TABLE fields IS 'Lotes o parcelas de cultivo';
-COMMENT ON COLUMN fields.geometry IS 'Polígono del lote en formato WGS84';
 ```
 
 ### 4.2 Tabla: campaigns
@@ -111,8 +105,7 @@ CREATE TABLE stations (
     field_id UUID NOT NULL REFERENCES fields(id) ON DELETE CASCADE,
     station_type VARCHAR(50) DEFAULT 'multivariable'
         CHECK (station_type IN ('clima', 'suelo', 'multivariable')),
-    latitude NUMERIC(9, 6) NOT NULL CHECK (latitude BETWEEN -90 AND 90),
-    longitude NUMERIC(9, 6) NOT NULL CHECK (longitude BETWEEN -180 AND 180),
+    notes TEXT,
     is_operational BOOLEAN DEFAULT TRUE,
     installed_at DATE,
     created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -122,7 +115,6 @@ CREATE TABLE stations (
 -- Índices
 CREATE INDEX idx_stations_field ON stations(field_id);
 CREATE INDEX idx_stations_operational ON stations(is_operational);
-CREATE INDEX idx_stations_location ON stations(latitude, longitude);
 
 -- Trigger
 CREATE TRIGGER update_stations_updated_at
@@ -456,32 +448,6 @@ END;
 $$ LANGUAGE plpgsql;
 ```
 
-### 5.2 Función de Validación de Geometría
-
-```sql
-CREATE OR REPLACE FUNCTION validate_station_within_field()
-RETURNS TRIGGER AS $$
-BEGIN
-    IF EXISTS (
-        SELECT 1 FROM fields
-        WHERE id = NEW.field_id
-          AND geometry IS NOT NULL
-          AND NOT ST_Within(
-              ST_SetSRID(ST_MakePoint(NEW.longitude, NEW.latitude), 4326),
-              geometry
-          )
-    ) THEN
-        RAISE EXCEPTION 'La estación debe estar dentro del polígono del lote';
-    END IF;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER check_station_location
-    BEFORE INSERT OR UPDATE ON stations
-    FOR EACH ROW
-    EXECUTE FUNCTION validate_station_within_field();
-```
 
 ## 6. Vistas Útiles
 
