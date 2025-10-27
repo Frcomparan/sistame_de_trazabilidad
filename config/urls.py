@@ -21,6 +21,9 @@ urlpatterns = [
     # Dashboard
     path('dashboard/', include('apps.core.urls')),
     
+    # Catalogs Web UI
+    path('catalogs/', include('apps.catalogs.urls')),
+    
     # Admin
     path('admin/', admin.site.urls),
     
@@ -30,7 +33,7 @@ urlpatterns = [
     
     # API Endpoints
     path('api/v1/auth/', include('apps.core.urls')),
-    path('api/v1/catalogs/', include('apps.catalogs.urls')),
+    path('api/v1/catalogs/', include(('apps.catalogs.api_urls', 'catalogs-api'), namespace='catalogs-api')),
     path('api/v1/events/', include('apps.events.urls')),
     path('api/v1/reports/', include('apps.reports.urls')),
 ]

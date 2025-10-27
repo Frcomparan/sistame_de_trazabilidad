@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Eliminar Campo - Sistema de Trazabilidad{% endblock %}
+
+{% block content %}
+<div class="container py-4" style="max-width: 600px;">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Inicio</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'field_list' %}">Campos</a></li>
+            <li class="breadcrumb-item active">Eliminar</li>
+        </ol>
+    </nav>
+
+    <!-- Confirmation Card -->
+    <div class="card border-danger">
+        <div class="card-header bg-danger text-white">
+            <h5 class="mb-0">
+                <i class="bi bi-exclamation-triangle"></i>
+                Confirmar Eliminación
+            </h5>
+        </div>
+        <div class="card-body">
+            <p class="mb-3">¿Está seguro que desea eliminar el siguiente campo?</p>
+            
+            <div class="alert alert-light border">
+                <table class="table table-sm mb-0">
+                    <tr>
+                        <th width="30%">Código:</th>
+                        <td><code>{{ field.code }}</code></td>
+                    </tr>
+                    <tr>
+                        <th>Nombre:</th>
+                        <td><strong>{{ field.name }}</strong></td>
+                    </tr>
+                    {% if field.surface_ha %}
+                    <tr>
+                        <th>Superficie:</th>
+                        <td>{{ field.surface_ha|floatformat:2 }} ha</td>
+                    </tr>
+                    {% endif %}
+                    <tr>
+                        <th>Estado:</th>
+                        <td>
+                            {% if field.is_active %}
+                                <span class="badge bg-success">Activo</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Inactivo</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="alert alert-warning">
+                <i class="bi bi-info-circle"></i>
+                <strong>Advertencia:</strong> Esta acción no se puede deshacer.
+            </div>
+
+            <form method="post" class="d-flex gap-2">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">
+                    <i class="bi bi-trash"></i> Sí, Eliminar
+                </button>
+                <a href="{% url 'field_list' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-circle"></i> Cancelar
+                </a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

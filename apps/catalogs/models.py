@@ -36,8 +36,8 @@ class Field(models.Model):
 
 
 class Campaign(models.Model):
-    """Modelo para campañas/temporadas de producción."""
-    id = models.AutoField(primary_key=True)
+    """Modelo para campañas/temporadas de cultivo."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=100, verbose_name="Nombre")
     season = models.CharField(max_length=50, blank=True, null=True, verbose_name="Temporada")
     variety = models.CharField(max_length=100, blank=True, null=True, verbose_name="Variedad")
@@ -76,7 +76,7 @@ class Station(models.Model):
         ('multivariable', 'Multivariable'),
     ]
 
-    id = models.AutoField(primary_key=True)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=100, verbose_name="Nombre")
     field = models.ForeignKey(
         Field, 

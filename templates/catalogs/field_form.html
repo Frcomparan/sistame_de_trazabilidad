@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ action }} Campo - Sistema de Trazabilidad{% endblock %}
+
+{% block content %}
+<div class="container py-4" style="max-width: 800px;">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Inicio</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'field_list' %}">Campos</a></li>
+            <li class="breadcrumb-item active">{{ action }}</li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="mb-4">
+        <h2>
+            <i class="bi bi-geo-alt-fill text-success"></i>
+            {{ action }} Campo
+        </h2>
+    </div>
+
+    <!-- Form -->
+    <div class="card">
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                
+                <div class="row">
+                    <div class="col-md-8 mb-3">
+                        <label for="name" class="form-label">Nombre <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="name" name="name" 
+                               value="{% if field %}{{ field.name }}{% endif %}" required>
+                        <div class="form-text">Nombre descriptivo del campo</div>
+                    </div>
+                    
+                    <div class="col-md-4 mb-3">
+                        <label for="code" class="form-label">Código <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="code" name="code" 
+                               value="{% if field %}{{ field.code }}{% endif %}" required>
+                        <div class="form-text">Código único</div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="surface_ha" class="form-label">Superficie (ha)</label>
+                    <input type="number" class="form-control" id="surface_ha" name="surface_ha" 
+                           step="0.01" min="0" value="{% if field %}{{ field.surface_ha }}{% endif %}">
+                    <div class="form-text">Superficie en hectáreas</div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="notes" class="form-label">Notas</label>
+                    <textarea class="form-control" id="notes" name="notes" rows="4">{% if field %}{{ field.notes }}{% endif %}</textarea>
+                    <div class="form-text">Observaciones adicionales</div>
+                </div>
+
+                <div class="mb-4">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="is_active" name="is_active" 
+                               {% if not field or field.is_active %}checked{% endif %}>
+                        <label class="form-check-label" for="is_active">
+                            <strong>Campo activo</strong>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check-circle"></i> Guardar
+                    </button>
+                    <a href="{% url 'field_list' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-x-circle"></i> Cancelar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
