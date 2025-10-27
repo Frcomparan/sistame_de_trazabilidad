@@ -4,6 +4,8 @@
 
 Sistema web de trazabilidad para la gestión integral del cultivo de limón, desde las labores de campo hasta la poscosecha. Desarrollado en Python con Django, permite registrar, auditar y consultar eventos agronómicos, variables ambientales y operativas a través de una interfaz web y API REST.
 
+> **Enfoque MVP**: Este sistema está diseñado como un MVP (Minimum Viable Product), priorizando la simplicidad y la implementación rápida. Se minimiza la lógica compleja excepto el sistema de eventos dinámicos. El despliegue se realiza mediante Docker para facilitar la instalación y configuración.
+
 ## 🎯 Características Principales
 
 - **Trazabilidad completa** del ciclo de cultivo por lote/parcela
@@ -37,7 +39,8 @@ Sistema web de trazabilidad para la gestión integral del cultivo de limón, des
 ## 🛠️ Stack Tecnológico
 
 - **Backend**: Python 3.11+, Django 5.x, Django REST Framework
-- **Base de Datos**: PostgreSQL 15+ (con soporte JSONB y PostGIS)
+- **Base de Datos**: PostgreSQL 15+ (con soporte JSONB)
+- **Despliegue**: Docker + Docker Compose
 - **Autenticación**: JWT para API, Session para Web
 - **Testing**: pytest, pytest-django
 - **Documentación API**: OpenAPI/Swagger

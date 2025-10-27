@@ -8,6 +8,8 @@
 
 Este documento establece la visión, objetivos y alcance del Sistema de Trazabilidad Agrícola para cultivo de limón. Define qué problemas resuelve el sistema, quiénes serán sus usuarios y qué beneficios aportará a la organización.
 
+> **Nota importante**: Este sistema está diseñado como un **MVP (Minimum Viable Product)**, buscando ser lo más simple posible, minimizando la lógica y complejidad, priorizando la implementación rápida y sencilla. La única lógica compleja que se mantiene es la de creación dinámica de eventos, que es fundamental para la flexibilidad del sistema.
+
 ### 1.2 Audiencia
 
 - Equipo de desarrollo
@@ -17,9 +19,8 @@ Este documento establece la visión, objetivos y alcance del Sistema de Trazabil
 
 ## 2. Visión del Producto
 
-### 2.1 Declaración de Visión
 
-> **Centralizar la trazabilidad completa del cultivo de limón** —desde las labores de campo hasta la poscosecha— mediante una plataforma web moderna que permita registrar, auditar y consultar todos los eventos agronómicos, variables ambientales y operativas, facilitando la toma de decisiones basada en datos y el cumplimiento de estándares de calidad.
+> **Enfoque MVP**: El sistema busca la máxima simplicidad en su diseño, priorizando la implementación rápida y la facilidad de uso. Se minimiza la complejidad de la lógica de negocio, exceptuando el sistema de eventos dinámicos que es fundamental para la flexibilidad del mismo.
 
 ### 2.2 Propuesta de Valor
 

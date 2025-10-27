@@ -6,13 +6,15 @@
 
 ### 1.1 Estilo Arquitectónico
 
-El sistema adopta una **arquitectura en capas** con separación clara de responsabilidades:
+El sistema adopta una **arquitectura en capas** con separación clara de responsabilidades, manteniendo la máxima simplicidad para un MVP:
 
 - **Capa de Presentación**: Interfaz web (Django Templates + HTMX/Alpine.js)
 - **Capa de API**: Django REST Framework
 - **Capa de Lógica de Negocio**: Servicios y validadores Django
 - **Capa de Acceso a Datos**: Django ORM + PostgreSQL
 - **Capa de Persistencia**: PostgreSQL con JSONB
+
+> **Nota MVP**: El sistema está diseñado para minimizar complejidad y maximizar velocidad de implementación. La única lógica compleja mantenida es el sistema de eventos dinámicos, que es fundamental para la flexibilidad del sistema.
 
 ### 1.2 Diagrama de Arquitectura de Alto Nivel
 
@@ -571,12 +573,70 @@ Dispositivo IoT → API POST /variables/bulk → Auth JWT
 | **Testing** | pytest-django | 4.x | Mejor que unittest |
 | **Documentación API** | drf-spectacular | 0.27+ | OpenAPI 3.0 |
 | **CORS** | django-cors-headers | 4.x | Control CORS |
-| **Geoespacial** | GeoDjango + PostGIS | - | Opcional para mapas |
+| **Docker** | Docker + Docker Compose | - | Containerización |
 | **Excel Export** | openpyxl | 3.x | Exportación Excel |
 
 ## 9. Despliegue
 
-### 9.1 Arquitectura de Despliegue (Inicial)
+### 9.1 Arquitectura de Despliegue con Docker (MVP)
+
+El sistema utiliza **Docker** para simplificar el despliegue y asegurar consistencia entre entornos:
+
+```
+┌─────────────────────────────────────────────┐
+│         Docker Compose                      │
+│                                              │
+│  ┌────────────────────────────────────────┐ │
+│  │  Container: Django + Gunicorn         │ │
+│  │  - Web Application                     │ │
+│  │  - API REST                             │ │
+│  └─────────────────┬──────────────────────┘ │
+│                    ↓                         │
+│  ┌────────────────────────────────────────┐ │
+│  │  Container: PostgreSQL 15             │ │
+│  │  - Database                             │ │
+│  └────────────────────────────────────────┘ │
+│                                              │
+│  Volumes:                                   │
+│  - postgres_data                            │
+│  - media_files                               │
+│  - static_files                              │
+└─────────────────────────────────────────────┘
+```
+
+**Docker Compose Configuration** (simplificada):
+```yaml
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: traceability
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+
+  web:
+    build: .
+    command: gunicorn config.wsgi:application --bind 0.0.0.0:8000
+    volumes:
+      - .:/app
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+
+volumes:
+  postgres_data:
+  static_volume:
+  media_volume:
+```
+
+### 9.1.1 Arquitectura de Producción (Futura)
 
 ```
 ┌─────────────────────────────────────────────┐
@@ -587,16 +647,11 @@ Dispositivo IoT → API POST /variables/bulk → Auth JWT
 │  └─────────────────┬──────────────────────┘ │
 │                    ↓                         │
 │  ┌────────────────────────────────────────┐ │
-│  │  Gunicorn (WSGI Server)                │ │
-│  │  Django App (Workers x 4)              │ │
+│  │  Docker: Gunicorn + Django              │ │
 │  └─────────────────┬──────────────────────┘ │
 │                    ↓                         │
 │  ┌────────────────────────────────────────┐ │
-│  │  PostgreSQL 15                         │ │
-│  └────────────────────────────────────────┘ │
-│                                              │
-│  ┌────────────────────────────────────────┐ │
-│  │  File Storage (Media Files)            │ │
+│  │  Docker: PostgreSQL 15                │ │
 │  └────────────────────────────────────────┘ │
 └─────────────────────────────────────────────┘
 ```
