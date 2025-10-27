@@ -9,11 +9,14 @@ until python -c "import psycopg2; psycopg2.connect(host='db', port=5432, user='$
 done
 echo "PostgreSQL está listo"
 
-echo "Aplicando migraciones..."
-python manage.py migrate --noinput
+# Skip migrations if migrations don't exist yet
+if [ -f "/app/apps/core/migrations/0001_initial.py" ]; then
+    echo "Aplicando migraciones..."
+    python manage.py migrate --noinput
 
-echo "Recolectando archivos estáticos..."
-python manage.py collectstatic --noinput --clear
+    echo "Recolectando archivos estáticos..."
+    python manage.py collectstatic --noinput --clear
+fi
 
 echo "Iniciando servidor..."
 exec "$@"
