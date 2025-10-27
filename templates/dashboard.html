@@ -148,7 +148,8 @@
             </div>
         </div>
 
-        <!-- Administración -->
+        <!-- Administración - Solo para Superusuarios -->
+        {% if user.is_superuser %}
         <div class="col-md-6 col-lg-3 mb-4">
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-body text-center">
@@ -163,6 +164,7 @@
                 </div>
             </div>
         </div>
+        {% endif %}
 
         <!-- Reportes -->
         <div class="col-md-6 col-lg-3 mb-4">
@@ -255,7 +257,8 @@
 
 <style>
     .jumbotron {
-        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        background: linear-gradient(135deg, #f8faf6 0%, #e8f5e9 100%);
+        border: 1px solid var(--border-color);
     }
     
     .card {
