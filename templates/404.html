@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Página no encontrada - 404{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center align-items-center" style="min-height: 80vh;">
+        <div class="col-md-6 text-center">
+            <div class="display-1 text-muted">
+                <i class="bi bi-exclamation-triangle"></i>
+            </div>
+            <h1 class="display-4 mt-3">404</h1>
+            <p class="lead">Página no encontrada</p>
+            <p class="text-muted">
+                La página que estás buscando no existe o ha sido movida.
+            </p>
+            <a href="{% url 'dashboard' %}" class="btn btn-primary mt-3">
+                <i class="bi bi-house"></i> Volver al Inicio
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

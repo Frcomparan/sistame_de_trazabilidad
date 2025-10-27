@@ -219,3 +219,8 @@ LOGGING = {
 
 # Crear directorio de logs si no existe
 os.makedirs(BASE_DIR / 'logs', exist_ok=True)
+
+# Authentication Settings
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'dashboard'
+LOGOUT_REDIRECT_URL = 'login'

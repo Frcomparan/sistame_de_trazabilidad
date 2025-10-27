@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}Iniciar Sesión - Sistema de Trazabilidad{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center align-items-center" style="min-height: 80vh;">
+        <div class="col-md-5 col-lg-4">
+            <div class="card shadow-lg border-0">
+                <div class="card-header text-center py-4">
+                    <h3 class="mb-0">
+                        <i class="bi bi-flower1"></i> Trazabilidad
+                    </h3>
+                    <p class="mb-0 mt-2 text-white-50 small">Sistema de Cultivo de Limón</p>
+                </div>
+                <div class="card-body p-4">
+                    <h5 class="card-title text-center mb-4">Iniciar Sesión</h5>
+                    
+                    {% if form.errors %}
+                    <div class="alert alert-danger" role="alert">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        Usuario o contraseña incorrectos. Por favor, intente nuevamente.
+                    </div>
+                    {% endif %}
+
+                    <form method="post" action="{% url 'login' %}">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="id_username" class="form-label">
+                                <i class="bi bi-person"></i> Usuario
+                            </label>
+                            <input 
+                                type="text" 
+                                name="username" 
+                                id="id_username"
+                                class="form-control form-control-lg" 
+                                placeholder="Ingrese su usuario"
+                                required 
+                                autofocus
+                            >
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="id_password" class="form-label">
+                                <i class="bi bi-lock"></i> Contraseña
+                            </label>
+                            <input 
+                                type="password" 
+                                name="password" 
+                                id="id_password"
+                                class="form-control form-control-lg" 
+                                placeholder="Ingrese su contraseña"
+                                required
+                            >
+                        </div>
+
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="remember_me" name="remember_me">
+                            <label class="form-check-label" for="remember_me">
+                                Recordarme
+                            </label>
+                        </div>
+
+                        <input type="hidden" name="next" value="{{ next }}">
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-box-arrow-in-right"></i> Iniciar Sesión
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer text-center py-3 bg-light">
+                    <small class="text-muted">
+                        <i class="bi bi-info-circle"></i> 
+                        ¿Problemas para acceder? Contacte al administrador
+                    </small>
+                </div>
+            </div>
+            
+            <!-- Info adicional -->
+            <div class="text-center mt-4 text-white">
+                <p class="small">
+                    <i class="bi bi-shield-check"></i> Acceso seguro al sistema
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    body {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .card {
+        border-radius: 15px;
+        overflow: hidden;
+    }
+    
+    .card-header {
+        border-bottom: none;
+    }
+    
+    .form-control:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.2rem rgba(46, 125, 50, 0.25);
+    }
+</style>
+{% endblock %}
