@@ -38,13 +38,159 @@ Sistema web de trazabilidad para la gestión integral del cultivo de limón, des
 
 ## 🛠️ Stack Tecnológico
 
-- **Backend**: Python 3.11+, Django 5.x, Django REST Framework
+- **Backend**: Python 3.11+, Django 4.2+, Django REST Framework
 - **Base de Datos**: PostgreSQL 15+ (con soporte JSONB)
 - **Despliegue**: Docker + Docker Compose
 - **Autenticación**: JWT para API, Session para Web
 - **Testing**: pytest, pytest-django
-- **Documentación API**: OpenAPI/Swagger
+- **Documentación API**: OpenAPI/Swagger (drf-spectacular)
 - **Control de Versiones**: Git
+
+## 🚀 Instalación y Configuración
+
+### Prerrequisitos
+
+- Docker Desktop instalado
+- Git instalado
+
+### Pasos para Levantar el Proyecto
+
+#### 1. Clonar el repositorio
+
+```powershell
+git clone https://github.com/Frcomparan/sistame_de_trazabilidad.git
+cd sistame_de_trazabilidad
+```
+
+#### 2. Configurar variables de entorno
+
+```powershell
+# Copiar el archivo de ejemplo
+cp .env.example .env
+
+# Editar .env con tus configuraciones (opcional para desarrollo local)
+# Por defecto, ya incluye configuraciones de desarrollo
+```
+
+#### 3. Construir y levantar los contenedores
+
+```powershell
+# Construir las imágenes de Docker
+docker compose build
+
+# Levantar los servicios (base de datos + aplicación web)
+docker compose up -d
+```
+
+#### 4. Ejecutar migraciones de base de datos
+
+```powershell
+# Crear las migraciones
+docker compose exec web python manage.py makemigrations
+
+# Aplicar las migraciones a la base de datos
+docker compose exec web python manage.py migrate
+```
+
+#### 5. Crear un superusuario
+
+```powershell
+# Crear un usuario administrador
+docker compose exec web python manage.py createsuperuser
+```
+
+Sigue las instrucciones en pantalla para ingresar:
+- Nombre de usuario
+- Email (opcional)
+- Contraseña
+
+#### 6. Recolectar archivos estáticos
+
+```powershell
+docker compose exec web python manage.py collectstatic --noinput
+```
+
+### Acceder a la Aplicación
+
+- **Aplicación Web**: http://localhost:8000
+- **Admin de Django**: http://localhost:8000/admin
+- **API REST**: http://localhost:8000/api/v1/
+- **Documentación API (Swagger)**: http://localhost:8000/api/docs/
+- **Esquema OpenAPI**: http://localhost:8000/api/schema/
+
+### Comandos Útiles de Docker
+
+```powershell
+# Ver logs de la aplicación
+docker compose logs -f web
+
+# Ver logs de la base de datos
+docker compose logs -f db
+
+# Detener los contenedores
+docker compose down
+
+# Detener y eliminar volúmenes (¡CUIDADO! Elimina la base de datos)
+docker compose down -v
+
+# Reiniciar un servicio específico
+docker compose restart web
+
+# Acceder a la shell de Django
+docker compose exec web python manage.py shell
+
+# Acceder a la shell de PostgreSQL
+docker compose exec db psql -U trazabilidad_user -d trazabilidad_db
+
+# Ejecutar tests
+docker compose exec web pytest
+
+# Ver contenedores activos
+docker compose ps
+
+# Reconstruir y levantar (útil después de cambios en código)
+docker compose up -d --build
+```
+
+### Desarrollo Local
+
+Para desarrollo activo con recarga automática:
+
+```powershell
+# Levantar en modo desarrollo (logs en consola)
+docker compose up
+
+# O en background
+docker compose up -d
+
+# Los cambios en el código se reflejan automáticamente
+# gracias al volumen montado en docker-compose.yml
+```
+
+### Solución de Problemas
+
+**El contenedor no inicia:**
+```powershell
+docker compose logs web
+```
+
+**Error de conexión a la base de datos:**
+```powershell
+# Verificar que el contenedor de PostgreSQL esté corriendo
+docker compose ps
+
+# Reiniciar la base de datos
+docker compose restart db
+```
+
+**Limpiar y empezar desde cero:**
+```powershell
+docker compose down -v
+docker compose build --no-cache
+docker compose up -d
+docker compose exec web python manage.py migrate
+docker compose exec web python manage.py createsuperuser
+```
 
 ## 👥 Actores del Sistema
 
@@ -89,17 +235,21 @@ El sistema incluye soporte predefinido para los siguientes eventos de trazabilid
 
 ## 🚀 Estado del Proyecto
 
-**Fase Actual**: Documentación y Diseño Inicial
+**Fase Actual**: Setup Inicial y Desarrollo Base
 
 ### Hitos Completados
 - ✅ Análisis de requerimientos
 - ✅ Definición de arquitectura
 - ✅ Diseño de base de datos
+- ✅ Setup inicial del proyecto Django
+- ✅ Configuración de Docker y Docker Compose
+- ✅ Implementación de modelos base
 
 ### Próximos Hitos
-- ⏳ Setup inicial del proyecto Django
-- ⏳ Implementación de modelos base
 - ⏳ Desarrollo del sistema de eventos dinámicos
+- ⏳ Implementación de API REST completa
+- ⏳ Interfaz web de usuario
+- ⏳ Sistema de autenticación y permisos
 
 ## 📅 Cronograma
 
