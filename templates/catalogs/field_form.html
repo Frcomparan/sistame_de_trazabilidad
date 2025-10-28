@@ -15,11 +15,26 @@
     </nav>
 
     <!-- Header -->
-    <div class="mb-4">
+    <div class="mb-3">
         <h2>
             <i class="bi bi-geo-alt-fill text-success"></i>
             {{ action }} Campo
         </h2>
+    </div>
+
+    <!-- Info Alert (Colapsable) -->
+    <div class="alert alert-light border-start border-success border-4 mb-4" role="alert">
+        <div class="d-flex align-items-start">
+            <i class="bi bi-lightbulb-fill text-success me-2 flex-shrink-0" style="font-size: 1.1rem;"></i>
+            <div class="flex-grow-1">
+                <h6 class="mb-1">Registro de Campo</h6>
+                <p class="mb-0 small text-muted">
+                    Un <strong>Campo</strong> es una parcela o terreno donde se realiza el cultivo de limón. 
+                    Registra información básica como nombre, código único, superficie y observaciones. 
+                    Los campos activos podrán ser utilizados en campañas de cultivo y eventos de trazabilidad.
+                </p>
+            </div>
+        </div>
     </div>
 
     <!-- Form -->
@@ -30,31 +45,59 @@
                 
                 <div class="row">
                     <div class="col-md-8 mb-3">
-                        <label for="name" class="form-label">Nombre <span class="text-danger">*</span></label>
+                        <label for="name" class="form-label">
+                            Nombre del Campo <span class="text-danger">*</span>
+                            <i class="bi bi-question-circle text-muted" 
+                               data-bs-toggle="tooltip" 
+                               data-bs-placement="right" 
+                               title="Nombre descriptivo que identifica al campo, por ejemplo: 'Parcela Norte', 'Campo El Limonal', etc."></i>
+                        </label>
                         <input type="text" class="form-control" id="name" name="name" 
-                               value="{% if field %}{{ field.name }}{% endif %}" required>
-                        <div class="form-text">Nombre descriptivo del campo</div>
+                               value="{% if field %}{{ field.name }}{% endif %}" 
+                               placeholder="Ej: Parcela Norte" required>
+                        <div class="form-text">Nombre identificativo del campo o parcela</div>
                     </div>
                     
                     <div class="col-md-4 mb-3">
-                        <label for="code" class="form-label">Código <span class="text-danger">*</span></label>
+                        <label for="code" class="form-label">
+                            Código <span class="text-danger">*</span>
+                            <i class="bi bi-question-circle text-muted" 
+                               data-bs-toggle="tooltip" 
+                               data-bs-placement="right" 
+                               title="Código alfanumérico único para identificar el campo en el sistema"></i>
+                        </label>
                         <input type="text" class="form-control" id="code" name="code" 
-                               value="{% if field %}{{ field.code }}{% endif %}" required>
-                        <div class="form-text">Código único</div>
+                               value="{% if field %}{{ field.code }}{% endif %}" 
+                               placeholder="Ej: FIELD-001" required>
+                        <div class="form-text">Código único de identificación</div>
                     </div>
                 </div>
 
                 <div class="mb-3">
-                    <label for="surface_ha" class="form-label">Superficie (ha)</label>
+                    <label for="surface_ha" class="form-label">
+                        Superficie (hectáreas)
+                        <i class="bi bi-question-circle text-muted" 
+                           data-bs-toggle="tooltip" 
+                           data-bs-placement="right" 
+                           title="Área total del campo en hectáreas. Esta información es útil para cálculos de productividad y rendimiento"></i>
+                    </label>
                     <input type="number" class="form-control" id="surface_ha" name="surface_ha" 
-                           step="0.01" min="0" value="{% if field %}{{ field.surface_ha }}{% endif %}">
-                    <div class="form-text">Superficie en hectáreas</div>
+                           step="0.01" min="0" value="{% if field %}{{ field.surface_ha }}{% endif %}"
+                           placeholder="Ej: 2.50">
+                    <div class="form-text">Superficie total del campo en hectáreas (ha)</div>
                 </div>
 
                 <div class="mb-3">
-                    <label for="notes" class="form-label">Notas</label>
-                    <textarea class="form-control" id="notes" name="notes" rows="4">{% if field %}{{ field.notes }}{% endif %}</textarea>
-                    <div class="form-text">Observaciones adicionales</div>
+                    <label for="notes" class="form-label">
+                        Notas y Observaciones
+                        <i class="bi bi-question-circle text-muted" 
+                           data-bs-toggle="tooltip" 
+                           data-bs-placement="right" 
+                           title="Información adicional relevante sobre el campo: características del suelo, ubicación específica, condiciones especiales, etc."></i>
+                    </label>
+                    <textarea class="form-control" id="notes" name="notes" rows="4" 
+                              placeholder="Ej: Campo con buen drenaje, orientación norte, acceso por camino principal...">{% if field %}{{ field.notes }}{% endif %}</textarea>
+                    <div class="form-text">Información adicional sobre el campo</div>
                 </div>
 
                 <div class="mb-4">
@@ -62,8 +105,13 @@
                         <input class="form-check-input" type="checkbox" id="is_active" name="is_active" 
                                {% if not field or field.is_active %}checked{% endif %}>
                         <label class="form-check-label" for="is_active">
-                            <strong>Campo activo</strong>
+                            <strong>Campo Activo</strong>
+                            <i class="bi bi-question-circle text-muted ms-1" 
+                               data-bs-toggle="tooltip" 
+                               data-bs-placement="right" 
+                               title="Los campos activos pueden ser utilizados en nuevas campañas y eventos. Desactiva un campo si ya no está en uso productivo"></i>
                         </label>
+                        <div class="form-text">Solo los campos activos pueden usarse en campañas de cultivo</div>
                     </div>
                 </div>
 
@@ -79,4 +127,15 @@
         </div>
     </div>
 </div>
+
+<!-- Script para activar tooltips -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Inicializar todos los tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
 {% endblock %}

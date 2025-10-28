@@ -15,11 +15,26 @@
     </nav>
 
     <!-- Header -->
-    <div class="mb-4">
+    <div class="mb-3">
         <h2>
             <i class="bi bi-calendar-event text-success"></i>
             {{ action }} Campaña
         </h2>
+    </div>
+
+    <!-- Info Alert -->
+    <div class="alert alert-light border-start border-primary border-4 mb-4" role="alert">
+        <div class="d-flex align-items-start">
+            <i class="bi bi-lightbulb-fill text-primary me-2 flex-shrink-0" style="font-size: 1.1rem;"></i>
+            <div class="flex-grow-1">
+                <h6 class="mb-1">Registro de Campaña</h6>
+                <p class="mb-0 small text-muted">
+                    Una <strong>Campaña</strong> es un ciclo productivo de cultivo de limón en un campo específico. 
+                    Define la temporada, variedad, fechas de inicio y fin del ciclo. Las campañas activas permiten 
+                    registrar eventos como siembras, cosechas, aplicaciones fitosanitarias y otros procesos de trazabilidad.
+                </p>
+            </div>
+        </div>
     </div>
 
     <!-- Form -->
@@ -29,49 +44,88 @@
                 {% csrf_token %}
                 
                 <div class="mb-3">
-                    <label for="name" class="form-label">Nombre <span class="text-danger">*</span></label>
+                    <label for="name" class="form-label">
+                        Nombre de la Campaña <span class="text-danger">*</span>
+                        <i class="bi bi-question-circle text-muted" 
+                           data-bs-toggle="tooltip" 
+                           data-bs-placement="right" 
+                           title="Nombre identificativo del ciclo productivo, por ejemplo: 'Campaña Primavera 2024', 'Ciclo Limón Persa 2024', etc."></i>
+                    </label>
                     <input type="text" class="form-control" id="name" name="name" 
-                           value="{% if campaign %}{{ campaign.name }}{% endif %}" required>
-                    <div class="form-text">Nombre descriptivo de la campaña</div>
+                           value="{% if campaign %}{{ campaign.name }}{% endif %}" 
+                           placeholder="Ej: Campaña Verano 2024" required>
+                    <div class="form-text">Nombre descriptivo del ciclo de cultivo</div>
                 </div>
 
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label for="season" class="form-label">Temporada</label>
+                        <label for="season" class="form-label">
+                            Temporada
+                            <i class="bi bi-question-circle text-muted" 
+                               data-bs-toggle="tooltip" 
+                               data-bs-placement="right" 
+                               title="Temporada del año en la que se desarrolla el cultivo (Primavera, Verano, Otoño, Invierno)"></i>
+                        </label>
                         <input type="text" class="form-control" id="season" name="season" 
                                value="{% if campaign %}{{ campaign.season }}{% endif %}" 
                                placeholder="Ej: Verano 2024">
-                        <div class="form-text">Temporada o ciclo</div>
+                        <div class="form-text">Temporada o estación del año</div>
                     </div>
                     
                     <div class="col-md-6 mb-3">
-                        <label for="variety" class="form-label">Variedad</label>
+                        <label for="variety" class="form-label">
+                            Variedad de Limón
+                            <i class="bi bi-question-circle text-muted" 
+                               data-bs-toggle="tooltip" 
+                               data-bs-placement="right" 
+                               title="Tipo o variedad de limón cultivada: Eureka, Lisbon, Persa, Meyer, etc."></i>
+                        </label>
                         <input type="text" class="form-control" id="variety" name="variety" 
                                value="{% if campaign %}{{ campaign.variety }}{% endif %}"
-                               placeholder="Ej: Eureka, Lisbon">
-                        <div class="form-text">Variedad de limón</div>
+                               placeholder="Ej: Eureka, Lisbon, Persa">
+                        <div class="form-text">Variedad específica de limón</div>
                     </div>
                 </div>
 
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label for="start_date" class="form-label">Fecha de Inicio <span class="text-danger">*</span></label>
+                        <label for="start_date" class="form-label">
+                            Fecha de Inicio <span class="text-danger">*</span>
+                            <i class="bi bi-question-circle text-muted" 
+                               data-bs-toggle="tooltip" 
+                               data-bs-placement="right" 
+                               title="Fecha en que inicia el ciclo productivo o campaña de cultivo"></i>
+                        </label>
                         <input type="date" class="form-control" id="start_date" name="start_date" 
                                value="{% if campaign %}{{ campaign.start_date|date:'Y-m-d' }}{% endif %}" required>
+                        <div class="form-text">Inicio del ciclo productivo</div>
                     </div>
                     
                     <div class="col-md-6 mb-3">
-                        <label for="end_date" class="form-label">Fecha de Fin</label>
+                        <label for="end_date" class="form-label">
+                            Fecha de Fin
+                            <i class="bi bi-question-circle text-muted" 
+                               data-bs-toggle="tooltip" 
+                               data-bs-placement="right" 
+                               title="Fecha estimada o real de finalización de la campaña. Dejar vacío si el ciclo está en curso"></i>
+                        </label>
                         <input type="date" class="form-control" id="end_date" name="end_date" 
                                value="{% if campaign and campaign.end_date %}{{ campaign.end_date|date:'Y-m-d' }}{% endif %}">
-                        <div class="form-text">Dejar vacío si está en curso</div>
+                        <div class="form-text">Dejar vacío si la campaña está en curso</div>
                     </div>
                 </div>
 
                 <div class="mb-3">
-                    <label for="notes" class="form-label">Notas</label>
-                    <textarea class="form-control" id="notes" name="notes" rows="4">{% if campaign %}{{ campaign.notes }}{% endif %}</textarea>
-                    <div class="form-text">Observaciones adicionales</div>
+                    <label for="notes" class="form-label">
+                        Notas y Observaciones
+                        <i class="bi bi-question-circle text-muted" 
+                           data-bs-toggle="tooltip" 
+                           data-bs-placement="right" 
+                           title="Información relevante sobre la campaña: objetivos, condiciones especiales, rendimiento esperado, etc."></i>
+                    </label>
+                    <textarea class="form-control" id="notes" name="notes" rows="4" 
+                              placeholder="Ej: Objetivo de producción: 10 toneladas. Riego por goteo. Fertilización orgánica...">{% if campaign %}{{ campaign.notes }}{% endif %}</textarea>
+                    <div class="form-text">Información adicional sobre la campaña</div>
                 </div>
 
                 <div class="mb-4">
@@ -79,8 +133,13 @@
                         <input class="form-check-input" type="checkbox" id="is_active" name="is_active" 
                                {% if not campaign or campaign.is_active %}checked{% endif %}>
                         <label class="form-check-label" for="is_active">
-                            <strong>Campaña activa</strong>
+                            <strong>Campaña Activa</strong>
+                            <i class="bi bi-question-circle text-muted ms-1" 
+                               data-bs-toggle="tooltip" 
+                               data-bs-placement="right" 
+                               title="Las campañas activas permiten registrar eventos y actividades. Desactiva cuando el ciclo haya finalizado"></i>
                         </label>
+                        <div class="form-text">Solo las campañas activas permiten registrar eventos</div>
                     </div>
                 </div>
 
@@ -96,4 +155,15 @@
         </div>
     </div>
 </div>
+
+<!-- Script para activar tooltips -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Inicializar todos los tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
 {% endblock %}
