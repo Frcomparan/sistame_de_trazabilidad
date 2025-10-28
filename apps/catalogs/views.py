@@ -2,32 +2,161 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
 from django.core.paginator import Paginator
-from rest_framework import generics, serializers
+from rest_framework import generics, status
+from rest_framework.response import Response
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample
+from drf_spectacular.types import OpenApiTypes
 from .models import Field, Campaign, Station
+from .serializers import (
+    FieldSerializer,
+    FieldListSerializer,
+    FieldCreateUpdateSerializer,
+    CampaignSerializer,
+    CampaignListSerializer,
+    CampaignCreateUpdateSerializer,
+    StationSerializer,
+)
 
 
 # ========== API Views ==========
 
-class FieldSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Field
-        fields = '__all__'
-
-
-class CampaignSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Campaign
-        fields = '__all__'
-
-
+@extend_schema(
+    summary="Listar Campos",
+    description="""
+    Obtiene una lista de todos los campos (parcelas) registrados en el sistema.
+    
+    Los campos representan las parcelas físicas donde se realiza el cultivo de limón.
+    Cada campo tiene una ubicación, superficie definida y puede estar asociado a múltiples campañas.
+    
+    **Casos de uso:**
+    - Consultar todos los campos disponibles para asignar a campañas
+    - Obtener información de superficie total cultivada
+    - Filtrar campos por estado (activo/inactivo)
+    """,
+    tags=['Catálogos - Campos'],
+    parameters=[
+        OpenApiParameter(
+            name='is_active',
+            type=OpenApiTypes.BOOL,
+            location=OpenApiParameter.QUERY,
+            description='Filtrar por estado: true (activos) o false (inactivos)',
+            required=False,
+        ),
+    ],
+    responses={
+        200: FieldListSerializer(many=True),
+    },
+    examples=[
+        OpenApiExample(
+            'Campos activos',
+            summary='Lista de campos activos',
+            description='Ejemplo de respuesta con campos activos',
+            value=[
+                {
+                    'id': '550e8400-e29b-41d4-a716-446655440000',
+                    'code': 'FIELD-001',
+                    'name': 'Parcela Norte',
+                    'surface_ha': 2.50,
+                    'is_active': True
+                }
+            ],
+            response_only=True,
+        ),
+    ],
+)
 class FieldListView(generics.ListAPIView):
-    queryset = Field.objects.filter(is_active=True)
-    serializer_class = FieldSerializer
+    """
+    API endpoint para listar campos/parcelas.
+    
+    Permite filtrar por estado (activo/inactivo) mediante query parameters.
+    """
+    serializer_class = FieldListSerializer
+    
+    def get_queryset(self):
+        queryset = Field.objects.all().order_by('-created_at')
+        is_active = self.request.query_params.get('is_active')
+        
+        if is_active is not None:
+            is_active_bool = is_active.lower() == 'true'
+            queryset = queryset.filter(is_active=is_active_bool)
+        
+        return queryset
 
 
+@extend_schema(
+    summary="Listar Campañas",
+    description="""
+    Obtiene una lista de todas las campañas (ciclos productivos) registradas en el sistema.
+    
+    Las campañas representan ciclos productivos o temporadas de cultivo de limón en un campo específico.
+    Cada campaña define la variedad cultivada, el período de tiempo y permite asociar eventos de trazabilidad.
+    
+    **Casos de uso:**
+    - Consultar campañas disponibles para registro de eventos
+    - Obtener información de ciclos productivos por temporada
+    - Filtrar campañas activas o finalizadas
+    """,
+    tags=['Catálogos - Campañas'],
+    parameters=[
+        OpenApiParameter(
+            name='is_active',
+            type=OpenApiTypes.BOOL,
+            location=OpenApiParameter.QUERY,
+            description='Filtrar por estado: true (activas) o false (inactivas)',
+            required=False,
+        ),
+        OpenApiParameter(
+            name='season',
+            type=OpenApiTypes.STR,
+            location=OpenApiParameter.QUERY,
+            description='Filtrar por temporada (ej: "Verano 2024")',
+            required=False,
+        ),
+    ],
+    responses={
+        200: CampaignListSerializer(many=True),
+    },
+    examples=[
+        OpenApiExample(
+            'Campañas activas',
+            summary='Lista de campañas activas',
+            description='Ejemplo de respuesta con campañas en curso',
+            value=[
+                {
+                    'id': '550e8400-e29b-41d4-a716-446655440001',
+                    'name': 'Campaña Verano 2024',
+                    'season': 'Verano 2024',
+                    'variety': 'Eureka',
+                    'start_date': '2024-01-15',
+                    'end_date': None,
+                    'is_active': True
+                }
+            ],
+            response_only=True,
+        ),
+    ],
+)
 class CampaignListView(generics.ListAPIView):
-    queryset = Campaign.objects.filter(is_active=True)
-    serializer_class = CampaignSerializer
+    """
+    API endpoint para listar campañas de cultivo.
+    
+    Permite filtrar por estado y temporada mediante query parameters.
+    """
+    serializer_class = CampaignListSerializer
+    
+    def get_queryset(self):
+        queryset = Campaign.objects.all().order_by('-start_date')
+        is_active = self.request.query_params.get('is_active')
+        season = self.request.query_params.get('season')
+        
+        if is_active is not None:
+            is_active_bool = is_active.lower() == 'true'
+            queryset = queryset.filter(is_active=is_active_bool)
+        
+        if season:
+            queryset = queryset.filter(season__icontains=season)
+        
+        return queryset
 
 
 # ========== Template Views ==========
