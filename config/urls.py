@@ -7,8 +7,10 @@ from django.contrib.auth import views as auth_views
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from django.views.generic import RedirectView
+from django.views.generic import RedirectView, TemplateView
+from django.views.static import serve
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
+import os
 
 urlpatterns = [
     # Root redirect to login
@@ -20,6 +22,9 @@ urlpatterns = [
     
     # Admin
     path('admin/', admin.site.urls),
+    
+    # robots.txt
+    path('robots.txt', lambda r: serve(r, 'robots.txt', document_root=settings.STATIC_ROOT or os.path.join(settings.BASE_DIR, 'static'))),
     
     # ========== WEB UI ROUTES (Templates/HTML) ==========
     path('dashboard/', include('apps.core.urls')),
