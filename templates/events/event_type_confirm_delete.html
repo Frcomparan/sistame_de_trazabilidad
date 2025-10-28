@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+
+{% block title %}Eliminar Tipo de Evento - Sistema de Trazabilidad{% endblock %}
+
+{% block content %}
+<div class="container py-4" style="max-width: 700px;">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Inicio</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'event_list' %}">Eventos</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'event_type_list' %}">Tipos de Eventos</a></li>
+            <li class="breadcrumb-item active">Eliminar</li>
+        </ol>
+    </nav>
+
+    <!-- Card de Confirmación -->
+    <div class="card border-danger">
+        <div class="card-header bg-danger text-white">
+            <h5 class="mb-0">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                Confirmar Eliminación
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="mb-4">
+                <h6>¿Está seguro que desea eliminar este tipo de evento?</h6>
+                
+                <div class="border rounded p-3 bg-light mt-3">
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="p-2 rounded me-3" style="background-color: {{ event_type.color }}20;">
+                            <i class="bi bi-{{ event_type.icon }}" style="color: {{ event_type.color }}; font-size: 2rem;"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-1">{{ event_type.name }}</h5>
+                            <span class="badge bg-secondary">{{ event_type.get_category_display }}</span>
+                        </div>
+                    </div>
+                    
+                    {% if event_type.description %}
+                    <p class="text-muted small mb-0">{{ event_type.description }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if event_count > 0 %}
+            <!-- Warning si hay eventos asociados -->
+            <div class="alert alert-danger" role="alert">
+                <div class="d-flex align-items-start">
+                    <i class="bi bi-exclamation-circle-fill me-2 flex-shrink-0"></i>
+                    <div>
+                        <h6 class="alert-heading">No se puede eliminar</h6>
+                        <p class="mb-0">
+                            Este tipo de evento tiene <strong>{{ event_count }} evento(s)</strong> registrado(s).
+                            No es posible eliminarlo mientras tenga eventos asociados.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="d-flex gap-2">
+                <a href="{% url 'event_type_list' %}" class="btn btn-primary">
+                    <i class="bi bi-arrow-left"></i> Volver a la Lista
+                </a>
+                <a href="{% url 'event_type_edit' event_type.id %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-pencil"></i> Editar en su Lugar
+                </a>
+            </div>
+            
+            {% else %}
+            <!-- Formulario de eliminación -->
+            <div class="alert alert-warning" role="alert">
+                <div class="d-flex align-items-start">
+                    <i class="bi bi-info-circle-fill me-2 flex-shrink-0"></i>
+                    <div>
+                        <strong>Esta acción no se puede deshacer.</strong>
+                        <p class="mb-0 small">
+                            Se eliminará permanentemente el tipo de evento y su configuración.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <form method="post">
+                {% csrf_token %}
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash"></i> Sí, Eliminar
+                    </button>
+                    <a href="{% url 'event_type_list' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-x-circle"></i> Cancelar
+                    </a>
+                </div>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

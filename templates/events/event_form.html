@@ -1,0 +1,300 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ action }} Evento - Sistema de Trazabilidad{% endblock %}
+
+{% block content %}
+<div class="container py-4" style="max-width: 900px;">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Inicio</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'event_list' %}">Eventos</a></li>
+            <li class="breadcrumb-item active">{{ action }}</li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="mb-3">
+        <h2>
+            <i class="bi bi-calendar3-event text-success"></i>
+            {{ action }} Evento de Trazabilidad
+        </h2>
+    </div>
+
+    <!-- Info Alert -->
+    <div class="alert alert-light border-start border-success border-4 mb-4" role="alert">
+        <div class="d-flex align-items-start">
+            <i class="bi bi-lightbulb-fill text-success me-2 flex-shrink-0" style="font-size: 1.1rem;"></i>
+            <div class="flex-grow-1">
+                <h6 class="mb-1">Registro Dinámico de Eventos</h6>
+                <p class="mb-0 small text-muted">
+                    Selecciona el tipo de evento para que el formulario se adapte automáticamente
+                    con los campos específicos requeridos. Cada tipo de evento tiene un esquema
+                    personalizado para capturar los datos necesarios.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form -->
+    <div class="card">
+        <div class="card-body">
+            <form method="post" id="eventForm">
+                {% csrf_token %}
+                
+                <!-- Información Básica -->
+                <div class="mb-4">
+                    <h5 class="border-bottom pb-2 mb-3">
+                        <i class="bi bi-info-circle"></i> Información Básica
+                    </h5>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="event_type" class="form-label">
+                                Tipo de Evento <span class="text-danger">*</span>
+                                <i class="bi bi-question-circle text-muted" 
+                                   data-bs-toggle="tooltip" 
+                                   title="Selecciona el tipo de actividad que vas a registrar"></i>
+                            </label>
+                            <select class="form-select" id="event_type" name="event_type" required>
+                                <option value="">-- Seleccionar --</option>
+                                {% regroup event_types by get_category_display as category_list %}
+                                {% for category in category_list %}
+                                    <optgroup label="{{ category.grouper }}">
+                                        {% for et in category.list %}
+                                            <option value="{{ et.id }}" 
+                                                    data-schema='{{ et.schema_json }}'
+                                                    data-icon="{{ et.icon }}"
+                                                    data-color="{{ et.color }}">
+                                                {{ et.name }}
+                                            </option>
+                                        {% endfor %}
+                                    </optgroup>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="timestamp" class="form-label">
+                                Fecha y Hora <span class="text-danger">*</span>
+                                <i class="bi bi-question-circle text-muted" 
+                                   data-bs-toggle="tooltip" 
+                                   title="Momento en que ocurrió el evento"></i>
+                            </label>
+                            <input type="datetime-local" class="form-control" id="timestamp" name="timestamp" required>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="field" class="form-label">
+                                Campo <span class="text-danger">*</span>
+                                <i class="bi bi-question-circle text-muted" 
+                                   data-bs-toggle="tooltip" 
+                                   title="Parcela o terreno donde ocurrió el evento"></i>
+                            </label>
+                            <select class="form-select" id="field" name="field" required>
+                                <option value="">-- Seleccionar --</option>
+                                {% for field in fields %}
+                                    <option value="{{ field.id }}">{{ field.name }} ({{ field.code }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="campaign" class="form-label">
+                                Campaña (opcional)
+                                <i class="bi bi-question-circle text-muted" 
+                                   data-bs-toggle="tooltip" 
+                                   title="Campaña de cultivo asociada al evento"></i>
+                            </label>
+                            <select class="form-select" id="campaign" name="campaign">
+                                <option value="">-- Sin campaña --</option>
+                                {% for campaign in campaigns %}
+                                    <option value="{{ campaign.id }}">
+                                        {{ campaign.name }} - {{ campaign.season }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Datos Dinámicos del Evento -->
+                <div class="mb-4" id="dynamicFieldsContainer" style="display: none;">
+                    <h5 class="border-bottom pb-2 mb-3">
+                        <i class="bi bi-list-task"></i> Datos Específicos del Evento
+                    </h5>
+                    <div id="dynamicFields"></div>
+                </div>
+
+                <!-- Observaciones -->
+                <div class="mb-4">
+                    <label for="observations" class="form-label">
+                        Observaciones
+                        <i class="bi bi-question-circle text-muted" 
+                           data-bs-toggle="tooltip" 
+                           title="Notas adicionales sobre el evento"></i>
+                    </label>
+                    <textarea class="form-control" id="observations" name="observations" rows="4"
+                              placeholder="Ej: Condiciones climáticas, personal involucrado, resultados observados..."></textarea>
+                    <div class="form-text">Información adicional relevante</div>
+                </div>
+
+                <!-- Buttons -->
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check-circle"></i> Registrar Evento
+                    </button>
+                    <a href="{% url 'event_list' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-x-circle"></i> Cancelar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Script para generar campos dinámicos -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Inicializar tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+
+        // Establecer fecha/hora actual por defecto
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        document.getElementById('timestamp').value = now.toISOString().slice(0, 16);
+
+        // Manejar cambio de tipo de evento
+        const eventTypeSelect = document.getElementById('event_type');
+        const dynamicFieldsContainer = document.getElementById('dynamicFieldsContainer');
+        const dynamicFields = document.getElementById('dynamicFields');
+
+        eventTypeSelect.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const schemaText = selectedOption.getAttribute('data-schema');
+            
+            if (schemaText && schemaText !== 'null' && schemaText !== '{}') {
+                try {
+                    const schema = JSON.parse(schemaText);
+                    generateDynamicFields(schema);
+                    dynamicFieldsContainer.style.display = 'block';
+                } catch (e) {
+                    console.error('Error parsing schema:', e);
+                    dynamicFields.innerHTML = '<div class="alert alert-warning">Error al cargar campos dinámicos</div>';
+                }
+            } else {
+                dynamicFieldsContainer.style.display = 'none';
+                dynamicFields.innerHTML = '';
+            }
+        });
+
+        function generateDynamicFields(schema) {
+            dynamicFields.innerHTML = '';
+            
+            if (!schema.properties) {
+                dynamicFields.innerHTML = '<p class="text-muted">No hay campos adicionales para este tipo de evento</p>';
+                return;
+            }
+
+            const properties = schema.properties;
+            const required = schema.required || [];
+
+            for (const [fieldName, fieldSchema] of Object.entries(properties)) {
+                const isRequired = required.includes(fieldName);
+                const fieldHtml = createFormField(fieldName, fieldSchema, isRequired);
+                dynamicFields.innerHTML += fieldHtml;
+            }
+        }
+
+        function createFormField(name, schema, required) {
+            const fieldId = `payload_${name}`;
+            const label = schema.title || name;
+            const description = schema.description || '';
+            const type = schema.type || 'string';
+            
+            let inputHtml = '';
+            
+            switch (type) {
+                case 'number':
+                case 'integer':
+                    inputHtml = `
+                        <input type="number" 
+                               class="form-control" 
+                               id="${fieldId}" 
+                               name="${fieldId}"
+                               ${schema.minimum !== undefined ? `min="${schema.minimum}"` : ''}
+                               ${schema.maximum !== undefined ? `max="${schema.maximum}"` : ''}
+                               ${required ? 'required' : ''}
+                               placeholder="${schema.example || ''}">
+                    `;
+                    break;
+                case 'boolean':
+                    inputHtml = `
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="${fieldId}" name="${fieldId}" value="true">
+                            <label class="form-check-label" for="${fieldId}">Sí</label>
+                        </div>
+                    `;
+                    break;
+                case 'array':
+                    inputHtml = `
+                        <textarea class="form-control" 
+                                  id="${fieldId}" 
+                                  name="${fieldId}" 
+                                  rows="3" 
+                                  ${required ? 'required' : ''}
+                                  placeholder='["valor1", "valor2"]'></textarea>
+                        <small class="text-muted">Ingresa un array JSON</small>
+                    `;
+                    break;
+                case 'object':
+                    inputHtml = `
+                        <textarea class="form-control" 
+                                  id="${fieldId}" 
+                                  name="${fieldId}" 
+                                  rows="3" 
+                                  ${required ? 'required' : ''}
+                                  placeholder='{"clave": "valor"}'></textarea>
+                        <small class="text-muted">Ingresa un objeto JSON</small>
+                    `;
+                    break;
+                default: // string
+                    if (schema.enum) {
+                        inputHtml = `
+                            <select class="form-select" id="${fieldId}" name="${fieldId}" ${required ? 'required' : ''}>
+                                <option value="">-- Seleccionar --</option>
+                                ${schema.enum.map(opt => `<option value="${opt}">${opt}</option>`).join('')}
+                            </select>
+                        `;
+                    } else {
+                        inputHtml = `
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="${fieldId}" 
+                                   name="${fieldId}"
+                                   ${schema.maxLength ? `maxlength="${schema.maxLength}"` : ''}
+                                   ${required ? 'required' : ''}
+                                   placeholder="${schema.example || ''}">
+                        `;
+                    }
+            }
+
+            return `
+                <div class="mb-3">
+                    <label for="${fieldId}" class="form-label">
+                        ${label} ${required ? '<span class="text-danger">*</span>' : ''}
+                    </label>
+                    ${inputHtml}
+                    ${description ? `<div class="form-text">${description}</div>` : ''}
+                </div>
+            `;
+        }
+    });
+</script>
+{% endblock %}

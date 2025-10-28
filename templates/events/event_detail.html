@@ -1,0 +1,241 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load event_filters %}
+
+{% block title %}Detalle del Evento - Sistema de Trazabilidad{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Inicio</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'event_list' %}">Eventos</a></li>
+            <li class="breadcrumb-item active">Detalle</li>
+        </ol>
+    </nav>
+
+    <!-- Header con tipo de evento -->
+    <div class="mb-4">
+        <div class="d-flex align-items-center gap-3">
+            <div class="p-3 rounded-3" style="background-color: {{ event.event_type.color }}20;">
+                <i class="bi bi-{{ event.event_type.icon }} display-6" 
+                   style="color: {{ event.event_type.color }};"></i>
+            </div>
+            <div>
+                <h2 class="mb-1">{{ event.event_type.name }}</h2>
+                <p class="text-muted mb-0">
+                    <i class="bi bi-calendar3"></i> {{ event.timestamp|date:"d/m/Y H:i" }}
+                    <span class="mx-2">|</span>
+                    <i class="bi bi-person-fill"></i> {{ event.created_by.get_full_name|default:event.created_by.username }}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Columna principal -->
+        <div class="col-lg-8">
+            <!-- Información Básica -->
+            <div class="card mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle text-success"></i> Información Básica
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <h6 class="text-muted small mb-1">CAMPO</h6>
+                            <p class="mb-0">
+                                <strong>{{ event.field.name }}</strong>
+                                <span class="text-muted">({{ event.field.code }})</span>
+                            </p>
+                            <small class="text-muted">{{ event.field.location }}</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <h6 class="text-muted small mb-1">CAMPAÑA</h6>
+                            <p class="mb-0">
+                                {% if event.campaign %}
+                                    <strong>{{ event.campaign.name }}</strong>
+                                    <span class="badge bg-info">{{ event.campaign.season }}</span>
+                                {% else %}
+                                    <span class="text-muted fst-italic">Sin campaña asignada</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <h6 class="text-muted small mb-1">CATEGORÍA</h6>
+                            <span class="badge bg-secondary">{{ event.event_type.get_category_display }}</span>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <h6 class="text-muted small mb-1">FECHA DE REGISTRO</h6>
+                            <p class="mb-0">{{ event.created_at|date:"d/m/Y H:i" }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Datos Específicos del Evento -->
+            {% if event.payload %}
+            <div class="card mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-list-task text-success"></i> Datos del Evento
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <tbody>
+                                {% for key, value in event.payload.items %}
+                                <tr>
+                                    <th class="text-muted" style="width: 40%;">
+                                        {{ key|replace:"_: "|title }}
+                                    </th>
+                                    <td>
+                                        {% if value is None %}
+                                            <span class="text-muted fst-italic">Sin datos</span>
+                                        {% elif value == True %}
+                                            <i class="bi bi-check-circle-fill text-success"></i> Sí
+                                        {% elif value == False %}
+                                            <i class="bi bi-x-circle-fill text-danger"></i> No
+                                        {% else %}
+                                            {{ value }}
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Observaciones -->
+            {% if event.observations %}
+            <div class="card mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-chat-left-text text-success"></i> Observaciones
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-0" style="white-space: pre-wrap;">{{ event.observations }}</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Acciones Rápidas -->
+            <div class="card mb-4">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0">Acciones</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'event_list' %}" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-arrow-left"></i> Volver a la lista
+                        </a>
+                        <!-- Botones para futuras funcionalidades -->
+                        <!-- <a href="#" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-pencil"></i> Editar evento
+                        </a>
+                        <button class="btn btn-outline-danger btn-sm">
+                            <i class="bi bi-trash"></i> Eliminar evento
+                        </button> -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detalles del Campo -->
+            <div class="card mb-4">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0">
+                        <i class="bi bi-geo-alt-fill text-success"></i> Detalles del Campo
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <dl class="mb-0">
+                        <dt class="small text-muted">Nombre</dt>
+                        <dd>{{ event.field.name }}</dd>
+                        
+                        <dt class="small text-muted">Código</dt>
+                        <dd><code>{{ event.field.code }}</code></dd>
+                        
+                        <dt class="small text-muted">Ubicación</dt>
+                        <dd>{{ event.field.location|default:"No especificada" }}</dd>
+                        
+                        <dt class="small text-muted">Superficie</dt>
+                        <dd>
+                            {% if event.field.area %}
+                                {{ event.field.area }} ha
+                            {% else %}
+                                <span class="text-muted">No especificada</span>
+                            {% endif %}
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+
+            <!-- Detalles de la Campaña -->
+            {% if event.campaign %}
+            <div class="card mb-4">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0">
+                        <i class="bi bi-calendar-check text-success"></i> Detalles de la Campaña
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <dl class="mb-0">
+                        <dt class="small text-muted">Campaña</dt>
+                        <dd>{{ event.campaign.name }}</dd>
+                        
+                        <dt class="small text-muted">Temporada</dt>
+                        <dd><span class="badge bg-info">{{ event.campaign.season }}</span></dd>
+                        
+                        <dt class="small text-muted">Cultivo</dt>
+                        <dd>{{ event.campaign.crop|default:"No especificado" }}</dd>
+                        
+                        <dt class="small text-muted">Periodo</dt>
+                        <dd>
+                            {{ event.campaign.start_date|date:"d/m/Y" }} - 
+                            {{ event.campaign.end_date|date:"d/m/Y"|default:"Activa" }}
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Metadatos -->
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0">
+                        <i class="bi bi-info-square"></i> Metadatos
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <dl class="mb-0 small">
+                        <dt class="text-muted">ID del Evento</dt>
+                        <dd><code class="small">{{ event.id }}</code></dd>
+                        
+                        <dt class="text-muted">Creado por</dt>
+                        <dd>{{ event.created_by.get_full_name|default:event.created_by.username }}</dd>
+                        
+                        <dt class="text-muted">Fecha de creación</dt>
+                        <dd>{{ event.created_at|date:"d/m/Y H:i:s" }}</dd>
+                        
+                        <dt class="text-muted">Última modificación</dt>
+                        <dd>{{ event.updated_at|date:"d/m/Y H:i:s" }}</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

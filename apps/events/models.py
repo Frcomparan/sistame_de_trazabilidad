@@ -9,17 +9,16 @@ import uuid
 class EventType(models.Model):
     """Modelo para definir tipos de eventos con esquemas dinámicos."""
     CATEGORIES = [
-        ('riego', 'Riego'),
-        ('fertilizacion', 'Fertilización'),
-        ('fitosanitarios', 'Fitosanitarios'),
-        ('labores', 'Labores Culturales'),
-        ('monitoreo', 'Monitoreo'),
-        ('brotes', 'Brotes'),
-        ('clima', 'Variables Climáticas'),
-        ('cosecha', 'Cosecha'),
-        ('poscosecha', 'Poscosecha'),
-        ('mano_obra', 'Mano de Obra'),
-        ('otro', 'Otro'),
+        ('irrigation', 'Riego'),
+        ('fertilization', 'Fertilización'),
+        ('phytosanitary', 'Fitosanitarios'),
+        ('maintenance', 'Labores de Cultivo'),
+        ('monitoring', 'Monitoreo'),
+        ('harvest', 'Cosecha'),
+        ('postharvest', 'Poscosecha'),
+        ('analysis', 'Análisis'),
+        ('pruning', 'Poda'),
+        ('other', 'Otro'),
     ]
 
     id = models.AutoField(primary_key=True)

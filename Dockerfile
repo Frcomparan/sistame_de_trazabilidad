@@ -31,12 +31,14 @@ COPY . .
 # Crear directorio para archivos estáticos y media
 RUN mkdir -p /app/staticfiles /app/media
 
+# Copiar y configurar entrypoint
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh && \
+    sed -i 's/\r$//' /docker-entrypoint.sh
+
 # Exponer puerto
 EXPOSE 8000
 
-# Script de inicio
-COPY docker-entrypoint.sh /docker-entrypoint.sh
-RUN chmod +x /docker-entrypoint.sh
-
+# Configurar entrypoint y comando
 ENTRYPOINT ["/docker-entrypoint.sh"]
-CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3"]
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]

@@ -1,0 +1,408 @@
+[
+  {
+    "model": "events.eventtype",
+    "pk": 1,
+    "fields": {
+      "name": "Riego por Goteo",
+      "description": "Registro de aplicación de riego mediante sistema de goteo",
+      "category": "irrigation",
+      "icon": "droplet-fill",
+      "color": "#0dcaf0",
+      "is_active": true,
+      "schema": {
+        "type": "object",
+        "title": "Datos de Riego",
+        "required": ["duracion_horas", "caudal_l_h"],
+        "properties": {
+          "duracion_horas": {
+            "type": "number",
+            "title": "Duración (horas)",
+            "description": "Tiempo total de riego en horas",
+            "minimum": 0.1,
+            "maximum": 24,
+            "example": 2.5
+          },
+          "caudal_l_h": {
+            "type": "number",
+            "title": "Caudal (L/h)",
+            "description": "Caudal de agua en litros por hora",
+            "minimum": 0,
+            "example": 150
+          },
+          "presion_bar": {
+            "type": "number",
+            "title": "Presión (bar)",
+            "description": "Presión del sistema en bares",
+            "minimum": 0,
+            "example": 1.5
+          },
+          "fuente_agua": {
+            "type": "string",
+            "title": "Fuente de Agua",
+            "description": "Origen del agua utilizada",
+            "enum": ["Pozo", "Río", "Embalse", "Red municipal"],
+            "example": "Pozo"
+          }
+        }
+      }
+    }
+  },
+  {
+    "model": "events.eventtype",
+    "pk": 2,
+    "fields": {
+      "name": "Fertilización Foliar",
+      "description": "Aplicación de fertilizantes mediante aspersión foliar",
+      "category": "fertilization",
+      "icon": "moisture",
+      "color": "#198754",
+      "is_active": true,
+      "schema": {
+        "type": "object",
+        "title": "Datos de Fertilización",
+        "required": ["producto", "dosis_l_ha"],
+        "properties": {
+          "producto": {
+            "type": "string",
+            "title": "Producto Utilizado",
+            "description": "Nombre comercial del fertilizante",
+            "maxLength": 200,
+            "example": "Nitrofoska 15-15-15"
+          },
+          "dosis_l_ha": {
+            "type": "number",
+            "title": "Dosis (L/ha)",
+            "description": "Cantidad de producto por hectárea",
+            "minimum": 0,
+            "example": 3.5
+          },
+          "concentracion_ppm": {
+            "type": "number",
+            "title": "Concentración (ppm)",
+            "description": "Concentración de la solución en partes por millón",
+            "minimum": 0,
+            "example": 1500
+          },
+          "volumen_caldo_l": {
+            "type": "number",
+            "title": "Volumen de Caldo (L)",
+            "description": "Volumen total de solución aplicada",
+            "minimum": 0,
+            "example": 500
+          },
+          "metodo_aplicacion": {
+            "type": "string",
+            "title": "Método de Aplicación",
+            "enum": ["Aspersión", "Nebulización", "Fertirrigación"],
+            "example": "Aspersión"
+          }
+        }
+      }
+    }
+  },
+  {
+    "model": "events.eventtype",
+    "pk": 3,
+    "fields": {
+      "name": "Aplicación Fitosanitaria",
+      "description": "Aplicación de productos fitosanitarios para control de plagas y enfermedades",
+      "category": "phytosanitary",
+      "icon": "bug-fill",
+      "color": "#dc3545",
+      "is_active": true,
+      "schema": {
+        "type": "object",
+        "title": "Datos de Aplicación Fitosanitaria",
+        "required": ["producto", "tipo_producto", "dosis", "plaga_objetivo"],
+        "properties": {
+          "producto": {
+            "type": "string",
+            "title": "Producto",
+            "description": "Nombre comercial del fitosanitario",
+            "maxLength": 200,
+            "example": "Confidor 200 SL"
+          },
+          "tipo_producto": {
+            "type": "string",
+            "title": "Tipo de Producto",
+            "enum": ["Insecticida", "Fungicida", "Herbicida", "Acaricida", "Nematicida"],
+            "example": "Insecticida"
+          },
+          "principio_activo": {
+            "type": "string",
+            "title": "Principio Activo",
+            "description": "Ingrediente activo del producto",
+            "maxLength": 200,
+            "example": "Imidacloprid"
+          },
+          "dosis": {
+            "type": "number",
+            "title": "Dosis (mL/L o g/L)",
+            "description": "Dosis del producto",
+            "minimum": 0,
+            "example": 2.5
+          },
+          "plaga_objetivo": {
+            "type": "string",
+            "title": "Plaga/Enfermedad Objetivo",
+            "description": "Problema fitosanitario a controlar",
+            "maxLength": 200,
+            "example": "Minador de la hoja"
+          },
+          "volumen_aplicado_l": {
+            "type": "number",
+            "title": "Volumen Aplicado (L)",
+            "minimum": 0,
+            "example": 400
+          },
+          "plazo_seguridad_dias": {
+            "type": "integer",
+            "title": "Plazo de Seguridad (días)",
+            "description": "Días antes de cosecha",
+            "minimum": 0,
+            "example": 21
+          }
+        }
+      }
+    }
+  },
+  {
+    "model": "events.eventtype",
+    "pk": 4,
+    "fields": {
+      "name": "Cosecha",
+      "description": "Registro de actividad de cosecha de limones",
+      "category": "harvest",
+      "icon": "basket-fill",
+      "color": "#ffc107",
+      "is_active": true,
+      "schema": {
+        "type": "object",
+        "title": "Datos de Cosecha",
+        "required": ["cantidad_kg", "calidad"],
+        "properties": {
+          "cantidad_kg": {
+            "type": "number",
+            "title": "Cantidad (kg)",
+            "description": "Peso total cosechado en kilogramos",
+            "minimum": 0,
+            "example": 1250.5
+          },
+          "numero_cajas": {
+            "type": "integer",
+            "title": "Número de Cajas",
+            "description": "Cantidad de cajas llenadas",
+            "minimum": 0,
+            "example": 50
+          },
+          "calidad": {
+            "type": "string",
+            "title": "Clasificación de Calidad",
+            "enum": ["Extra", "Primera", "Segunda", "Industria"],
+            "example": "Primera"
+          },
+          "calibre_promedio": {
+            "type": "string",
+            "title": "Calibre Promedio",
+            "description": "Tamaño predominante del fruto",
+            "enum": ["Grande", "Mediano", "Pequeño"],
+            "example": "Mediano"
+          },
+          "destino": {
+            "type": "string",
+            "title": "Destino",
+            "enum": ["Exportación", "Mercado nacional", "Industria", "Autoconsumo"],
+            "example": "Exportación"
+          },
+          "equipo_cosecha": {
+            "type": "string",
+            "title": "Equipo de Cosecha",
+            "description": "Identificación del equipo o cuadrilla",
+            "maxLength": 100,
+            "example": "Cuadrilla A"
+          }
+        }
+      }
+    }
+  },
+  {
+    "model": "events.eventtype",
+    "pk": 5,
+    "fields": {
+      "name": "Poda",
+      "description": "Registro de actividad de poda de árboles",
+      "category": "pruning",
+      "icon": "scissors",
+      "color": "#6f42c1",
+      "is_active": true,
+      "schema": {
+        "type": "object",
+        "title": "Datos de Poda",
+        "required": ["tipo_poda", "numero_arboles"],
+        "properties": {
+          "tipo_poda": {
+            "type": "string",
+            "title": "Tipo de Poda",
+            "enum": ["Formación", "Producción", "Mantenimiento", "Rejuvenecimiento", "Sanitaria"],
+            "example": "Producción"
+          },
+          "numero_arboles": {
+            "type": "integer",
+            "title": "Número de Árboles",
+            "description": "Cantidad de árboles podados",
+            "minimum": 1,
+            "example": 150
+          },
+          "intensidad": {
+            "type": "string",
+            "title": "Intensidad de Poda",
+            "enum": ["Ligera", "Moderada", "Severa"],
+            "example": "Moderada"
+          },
+          "horas_trabajo": {
+            "type": "number",
+            "title": "Horas de Trabajo",
+            "description": "Tiempo total empleado en horas",
+            "minimum": 0,
+            "example": 8.5
+          },
+          "personal": {
+            "type": "integer",
+            "title": "Número de Trabajadores",
+            "minimum": 1,
+            "example": 3
+          },
+          "herramientas_desinfectadas": {
+            "type": "boolean",
+            "title": "Herramientas Desinfectadas",
+            "description": "Indica si se desinfectaron las herramientas",
+            "example": true
+          }
+        }
+      }
+    }
+  },
+  {
+    "model": "events.eventtype",
+    "pk": 6,
+    "fields": {
+      "name": "Monitoreo de Plagas",
+      "description": "Registro de inspección y monitoreo de plagas y enfermedades",
+      "category": "monitoring",
+      "icon": "eye-fill",
+      "color": "#fd7e14",
+      "is_active": true,
+      "schema": {
+        "type": "object",
+        "title": "Datos de Monitoreo",
+        "required": ["plaga_monitoreada", "nivel_incidencia"],
+        "properties": {
+          "plaga_monitoreada": {
+            "type": "string",
+            "title": "Plaga/Enfermedad Monitoreada",
+            "description": "Nombre de la plaga o enfermedad observada",
+            "maxLength": 200,
+            "example": "Araña roja"
+          },
+          "nivel_incidencia": {
+            "type": "string",
+            "title": "Nivel de Incidencia",
+            "enum": ["Ausente", "Bajo", "Medio", "Alto", "Muy alto"],
+            "example": "Bajo"
+          },
+          "arboles_afectados": {
+            "type": "integer",
+            "title": "Árboles Afectados",
+            "description": "Número de árboles con presencia de la plaga",
+            "minimum": 0,
+            "example": 5
+          },
+          "arboles_muestreados": {
+            "type": "integer",
+            "title": "Árboles Muestreados",
+            "description": "Total de árboles evaluados",
+            "minimum": 1,
+            "example": 50
+          },
+          "metodo_monitoreo": {
+            "type": "string",
+            "title": "Método de Monitoreo",
+            "enum": ["Visual", "Trampa cromática", "Trampa de feromonas", "Otro"],
+            "example": "Visual"
+          },
+          "requiere_tratamiento": {
+            "type": "boolean",
+            "title": "Requiere Tratamiento",
+            "description": "Indica si se requiere aplicar tratamiento",
+            "example": false
+          }
+        }
+      }
+    }
+  },
+  {
+    "model": "events.eventtype",
+    "pk": 7,
+    "fields": {
+      "name": "Análisis de Suelo",
+      "description": "Registro de toma de muestras y análisis de suelo",
+      "category": "analysis",
+      "icon": "clipboard-data",
+      "color": "#6c757d",
+      "is_active": true,
+      "schema": {
+        "type": "object",
+        "title": "Datos de Análisis de Suelo",
+        "required": ["tipo_analisis", "numero_muestras"],
+        "properties": {
+          "tipo_analisis": {
+            "type": "string",
+            "title": "Tipo de Análisis",
+            "enum": ["Físico", "Químico", "Completo", "Microbiológico"],
+            "example": "Químico"
+          },
+          "numero_muestras": {
+            "type": "integer",
+            "title": "Número de Muestras",
+            "minimum": 1,
+            "example": 3
+          },
+          "profundidad_cm": {
+            "type": "number",
+            "title": "Profundidad (cm)",
+            "description": "Profundidad de extracción de muestras",
+            "minimum": 0,
+            "example": 30
+          },
+          "laboratorio": {
+            "type": "string",
+            "title": "Laboratorio",
+            "description": "Nombre del laboratorio de análisis",
+            "maxLength": 200,
+            "example": "LabAgro S.A."
+          },
+          "ph": {
+            "type": "number",
+            "title": "pH",
+            "description": "Valor de pH del suelo",
+            "minimum": 0,
+            "maximum": 14,
+            "example": 6.5
+          },
+          "materia_organica_pct": {
+            "type": "number",
+            "title": "Materia Orgánica (%)",
+            "minimum": 0,
+            "maximum": 100,
+            "example": 3.2
+          },
+          "resultados_disponibles": {
+            "type": "boolean",
+            "title": "Resultados Disponibles",
+            "example": false
+          }
+        }
+      }
+    }
+  }
+]
