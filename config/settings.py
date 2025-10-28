@@ -177,10 +177,96 @@ CRISPY_TEMPLATE_PACK = "bootstrap5"
 
 # DRF Spectacular (OpenAPI)
 SPECTACULAR_SETTINGS = {
-    'TITLE': 'Sistema de Trazabilidad Agrícola API',
-    'DESCRIPTION': 'API REST para el sistema de trazabilidad de campos agrícolas',
+    'TITLE': 'Sistema de Trazabilidad Agrícola - API',
+    'DESCRIPTION': """
+    API REST para el Sistema de Trazabilidad de Cultivo de Limón.
+    
+    ## Descripción General
+    
+    Este sistema permite gestionar la trazabilidad completa del cultivo de limón, desde la 
+    definición de campos y campañas hasta el registro detallado de eventos durante el ciclo productivo.
+    
+    ## Módulos Principales
+    
+    ### 🌾 Catálogos
+    - **Campos (Fields)**: Gestión de parcelas o terrenos de cultivo
+    - **Campañas (Campaigns)**: Ciclos productivos y temporadas
+    - **Estaciones (Stations)**: Dispositivos de monitoreo IoT
+    
+    ### 📋 Eventos de Trazabilidad
+    - Registro de actividades agrícolas (riego, fertilización, cosecha)
+    - Tipos de eventos personalizables con esquemas JSON
+    - Validación automática de datos mediante JSON Schema
+    
+    ### 📊 Reportes y Análisis
+    - Health check del sistema
+    - Estadísticas de producción (próximamente)
+    - Análisis de trazabilidad (próximamente)
+    
+    ## Autenticación
+    
+    La API utiliza **JWT (JSON Web Tokens)** para autenticación.
+    
+    1. Obtener token: `POST /api/v1/auth/token/`
+    2. Usar token en headers: `Authorization: Bearer {token}`
+    3. Refrescar token: `POST /api/v1/auth/token/refresh/`
+    
+    ## Versionado
+    
+    - Version actual: **v1**
+    - Base URL: `/api/v1/`
+    - Todas las rutas incluyen el prefijo de versión
+    
+    ## Contacto y Soporte
+    
+    - Proyecto: Sistema de Trazabilidad Agrícola
+    - Versión: 1.0.0
+    - Tecnología: Django REST Framework + PostgreSQL
+    """,
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
+    'SCHEMA_PATH_PREFIX': '/api/v1/',
+    'COMPONENT_SPLIT_REQUEST': True,
+    'SORT_OPERATIONS': False,
+    'SERVERS': [
+        {
+            'url': 'http://localhost:8000',
+            'description': 'Servidor de Desarrollo'
+        },
+    ],
+    'TAGS': [
+        {
+            'name': 'Autenticación',
+            'description': 'Endpoints para autenticación JWT (obtener y refrescar tokens)',
+        },
+        {
+            'name': 'Catálogos - Campos',
+            'description': 'Gestión de campos/parcelas agrícolas donde se realiza el cultivo',
+        },
+        {
+            'name': 'Catálogos - Campañas',
+            'description': 'Gestión de campañas/ciclos productivos de cultivo',
+        },
+        {
+            'name': 'Eventos de Trazabilidad',
+            'description': 'Registro y consulta de eventos durante el ciclo de cultivo',
+        },
+        {
+            'name': 'Sistema - Reportes',
+            'description': 'Endpoints de sistema, monitoreo y reportes',
+        },
+    ],
+    'EXTERNAL_DOCS': {
+        'description': 'Documentación completa del proyecto',
+        'url': 'https://github.com/Frcomparan/sistame_de_trazabilidad',
+    },
+    'CONTACT': {
+        'name': 'Equipo de Desarrollo',
+        'email': 'support@trazabilidad-agricola.com',
+    },
+    'LICENSE': {
+        'name': 'MIT License',
+    },
 }
 
 # Logging
