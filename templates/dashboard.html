@@ -118,16 +118,24 @@
     <div class="row">
         <!-- Eventos -->
         <div class="col-md-6 col-lg-3 mb-4">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body text-center">
-                    <div class="mb-3">
-                        <i class="bi bi-calendar3-event text-warning" style="font-size: 3rem;"></i>
+            <div class="card border-0 shadow-sm h-100 hover-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <i class="bi bi-calendar3-event text-warning" style="font-size: 3rem;"></i>
+                        </div>
+                        <span class="badge bg-warning text-dark">Dinámico</span>
                     </div>
                     <h5 class="card-title">Eventos</h5>
-                    <p class="card-text text-muted">Registro de actividades</p>
-                    <a href="/admin/events/event/" class="btn btn-outline-warning btn-sm">
-                        Ver Eventos <i class="bi bi-arrow-right"></i>
-                    </a>
+                    <p class="card-text text-muted">Sistema de registro dinámico de eventos de trazabilidad.</p>
+                    <div class="d-flex gap-2 mt-3">
+                        <a href="{% url 'event_list' %}" class="btn btn-warning btn-sm">
+                            <i class="bi bi-list-ul"></i> Ver Lista
+                        </a>
+                        <a href="{% url 'event_create' %}" class="btn btn-outline-warning btn-sm">
+                            <i class="bi bi-plus-circle"></i> Crear
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>

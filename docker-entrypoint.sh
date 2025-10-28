@@ -3,7 +3,7 @@
 set -e
 
 echo "Esperando a que PostgreSQL esté disponible..."
-until python -c "import psycopg2; psycopg2.connect(host='db', port=5432, user='${POSTGRES_USER}', password='${POSTGRES_PASSWORD}', dbname='${POSTGRES_DB}')" 2>/dev/null; do
+until python -c "import psycopg2; psycopg2.connect(host='${POSTGRES_HOST:-db}', port=${POSTGRES_PORT:-5432}, user='${POSTGRES_USER:-trazabilidad_user}', password='${POSTGRES_PASSWORD:-trazabilidad_pass}', dbname='${POSTGRES_DB:-trazabilidad_db}')" 2>/dev/null; do
   echo "Esperando PostgreSQL..."
   sleep 1
 done

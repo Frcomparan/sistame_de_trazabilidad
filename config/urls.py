@@ -24,7 +24,7 @@ urlpatterns = [
     # ========== WEB UI ROUTES (Templates/HTML) ==========
     path('dashboard/', include('apps.core.urls')),
     path('catalogs/', include('apps.catalogs.urls')),
-    # path('events/', include('apps.events.urls')),  # TODO: Implement web UI
+    path('events/', include('apps.events.urls')),
     # path('reports/', include('apps.reports.urls')),  # TODO: Implement web UI
     
     # ========== API REST ROUTES (JSON) ==========
