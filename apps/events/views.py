@@ -279,7 +279,8 @@ def event_list_view(request):
     # Datos para filtros
     event_types = EventType.objects.filter(is_active=True).order_by('category', 'name')
     fields = Field.objects.filter(is_active=True).order_by('name')
-    campaigns = Campaign.objects.filter(is_active=True).order_by('-start_date')
+    # Mostrar todas las campañas (activas e inactivas) para permitir filtrar eventos históricos
+    campaigns = Campaign.objects.all().order_by('-start_date')
     
     context = {
         'events': events,
@@ -291,7 +292,8 @@ def event_list_view(request):
         'selected_campaign': campaign_id,
         'date_from': date_from,
         'date_to': date_to,
-        'total_count': Event.objects.count(),
+        # Contar eventos con filtros aplicados (no todos los eventos)
+        'total_count': events_list.count(),
     }
     return render(request, 'events/event_list.html', context)
 

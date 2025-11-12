@@ -177,22 +177,34 @@
                     {% if events.has_previous %}
                     <li class="page-item">
                         <a class="page-link" href="?page={{ events.previous_page_number }}{% if selected_event_type %}&event_type={{ selected_event_type }}{% endif %}{% if selected_field %}&field={{ selected_field }}{% endif %}{% if selected_campaign %}&campaign={{ selected_campaign }}{% endif %}">
-                            Anterior
+                            <i class="bi bi-chevron-left"></i> Anterior
                         </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">
+                            <i class="bi bi-chevron-left"></i> Anterior
+                        </span>
                     </li>
                     {% endif %}
 
-                    <li class="page-item active">
-                        <span class="page-link">
-                            Página {{ events.number }} de {{ events.paginator.num_pages }}
+                    <li class="page-item disabled">
+                        <span class="page-link bg-light text-dark border">
+                            <strong>Página {{ events.number }} de {{ events.paginator.num_pages }}</strong>
                         </span>
                     </li>
 
                     {% if events.has_next %}
                     <li class="page-item">
                         <a class="page-link" href="?page={{ events.next_page_number }}{% if selected_event_type %}&event_type={{ selected_event_type }}{% endif %}{% if selected_field %}&field={{ selected_field }}{% endif %}{% if selected_campaign %}&campaign={{ selected_campaign }}{% endif %}">
-                            Siguiente
+                            Siguiente <i class="bi bi-chevron-right"></i>
                         </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">
+                            Siguiente <i class="bi bi-chevron-right"></i>
+                        </span>
                     </li>
                     {% endif %}
                 </ul>
