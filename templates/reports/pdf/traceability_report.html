@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ report_title }}</title>
+    <style>
+        @page {
+            size: letter;
+            margin: 2cm 1.5cm;
+            @bottom-right {
+                content: "Página " counter(page) " de " counter(pages);
+                font-size: 9pt;
+                color: #666;
+            }
+        }
+        
+        body {
+            font-family: 'Helvetica', 'Arial', sans-serif;
+            font-size: 10pt;
+            line-height: 1.4;
+            color: #333;
+        }
+        
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #2c5f2d;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .header h1 {
+            color: #2c5f2d;
+            font-size: 20pt;
+            margin: 0 0 5px 0;
+            text-transform: uppercase;
+        }
+        
+        .header h2 {
+            color: #555;
+            font-size: 14pt;
+            margin: 0;
+            font-weight: normal;
+        }
+        
+        .info-section {
+            background-color: #f8f9fa;
+            border-left: 4px solid #2c5f2d;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .info-section h3 {
+            color: #2c5f2d;
+            font-size: 12pt;
+            margin: 0 0 10px 0;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        
+        .info-item {
+            margin-bottom: 5px;
+        }
+        
+        .info-item strong {
+            color: #555;
+        }
+        
+        .stats-section {
+            margin-bottom: 25px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #2c5f2d 0%, #3d7c3e 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        
+        .stat-card .number {
+            font-size: 24pt;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .stat-card .label {
+            font-size: 9pt;
+            opacity: 0.9;
+        }
+        
+        .events-section {
+            margin-top: 30px;
+        }
+        
+        .section-title {
+            color: #2c5f2d;
+            font-size: 14pt;
+            font-weight: bold;
+            margin-bottom: 15px;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #2c5f2d;
+        }
+        
+        .events-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            font-size: 9pt;
+        }
+        
+        .events-table thead {
+            background-color: #2c5f2d;
+            color: white;
+        }
+        
+        .events-table th {
+            padding: 8px 5px;
+            text-align: left;
+            font-weight: bold;
+            font-size: 9pt;
+        }
+        
+        .events-table tbody tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        .events-table tbody tr:hover {
+            background-color: #e9ecef;
+        }
+        
+        .events-table td {
+            padding: 6px 5px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .event-type-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 8pt;
+            font-weight: bold;
+            color: white;
+        }
+        
+        .badge-riego { background-color: #0d6efd; }
+        .badge-fertilizacion { background-color: #198754; }
+        .badge-fitosanitario { background-color: #dc3545; }
+        .badge-cosecha { background-color: #ffc107; color: #333; }
+        .badge-default { background-color: #6c757d; }
+        
+        .attachments-section {
+            margin-top: 20px;
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        
+        .attachments-list {
+            margin-top: 10px;
+        }
+        
+        .attachment-item {
+            padding: 5px 0;
+            border-bottom: 1px solid #dee2e6;
+            font-size: 9pt;
+        }
+        
+        .footer {
+            margin-top: 40px;
+            padding-top: 15px;
+            border-top: 2px solid #dee2e6;
+            font-size: 8pt;
+            color: #666;
+            text-align: center;
+        }
+        
+        .signature-section {
+            margin-top: 50px;
+            page-break-inside: avoid;
+        }
+        
+        .signature-box {
+            margin-top: 60px;
+            text-align: center;
+        }
+        
+        .signature-line {
+            border-top: 1px solid #333;
+            width: 250px;
+            margin: 0 auto;
+            padding-top: 5px;
+            font-size: 9pt;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <h1>Sistema de Trazabilidad Agrícola</h1>
+        <h2>{{ report_title }}</h2>
+    </div>
+    
+    <!-- Información General -->
+    <div class="info-section">
+        <h3>📋 Información General</h3>
+        <div class="info-grid">
+            <div class="info-item">
+                <strong>Lote:</strong> {{ field.name }} ({{ field.code }})
+            </div>
+            <div class="info-item">
+                <strong>Superficie:</strong> {{ field.surface_ha }} ha
+            </div>
+            {% if campaign %}
+            <div class="info-item">
+                <strong>Campaña:</strong> {{ campaign.name }}
+            </div>
+            <div class="info-item">
+                <strong>Período Campaña:</strong> {{ campaign.start_date|date:"d/m/Y" }} - {{ campaign.end_date|date:"d/m/Y" }}
+            </div>
+            {% endif %}
+            {% if date_from %}
+            <div class="info-item">
+                <strong>Fecha Inicio:</strong> {{ date_from|date:"d/m/Y" }}
+            </div>
+            {% endif %}
+            {% if date_to %}
+            <div class="info-item">
+                <strong>Fecha Fin:</strong> {{ date_to|date:"d/m/Y" }}
+            </div>
+            {% endif %}
+            <div class="info-item">
+                <strong>Generado:</strong> {{ generated_at|date:"d/m/Y H:i" }}
+            </div>
+            <div class="info-item">
+                <strong>Total de Eventos:</strong> {{ stats.total }}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Resumen Estadístico -->
+    <div class="stats-section">
+        <div class="section-title">📊 Resumen Ejecutivo</div>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <span class="number">{{ stats.total }}</span>
+                <span class="label">Total de Eventos</span>
+            </div>
+            <div class="stat-card">
+                <span class="number">{{ total_attachments }}</span>
+                <span class="label">Archivos Adjuntos</span>
+            </div>
+            <div class="stat-card">
+                <span class="number">{{ stats.by_type|length }}</span>
+                <span class="label">Tipos de Evento</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Distribución por Tipo de Evento -->
+    {% if stats.by_type %}
+    <div class="info-section">
+        <h3>📈 Distribución por Tipo de Evento</h3>
+        <table style="width: 100%; margin-top: 10px;">
+            {% for event_type, count in stats.by_type.items %}
+            <tr>
+                <td style="padding: 5px 0;"><strong>{{ event_type }}:</strong></td>
+                <td style="text-align: right; padding: 5px 0;">{{ count }} evento{{ count|pluralize }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+    {% endif %}
+    
+    <!-- Línea de Tiempo de Eventos -->
+    <div class="events-section">
+        <div class="section-title">📅 Línea de Tiempo de Eventos</div>
+        
+        {% if events %}
+        <table class="events-table">
+            <thead>
+                <tr>
+                    <th style="width: 12%;">Fecha</th>
+                    <th style="width: 8%;">Hora</th>
+                    <th style="width: 20%;">Tipo de Evento</th>
+                    <th style="width: 35%;">Observaciones</th>
+                    <th style="width: 15%;">Responsable</th>
+                    <th style="width: 10%;">Adjuntos</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for event in events %}
+                <tr>
+                    <td>{{ event.timestamp|date:"d/m/Y" }}</td>
+                    <td>{{ event.timestamp|date:"H:i" }}</td>
+                    <td>
+                        <span class="event-type-badge {% if 'Riego' in event.event_type.name %}badge-riego{% elif 'Fertilización' in event.event_type.name %}badge-fertilizacion{% elif 'Fitosanitario' in event.event_type.name %}badge-fitosanitario{% elif 'Cosecha' in event.event_type.name %}badge-cosecha{% else %}badge-default{% endif %}">
+                            {{ event.event_type.name }}
+                        </span>
+                    </td>
+                    <td>{{ event.observations|default:"Sin observaciones"|truncatewords:15 }}</td>
+                    <td>{{ event.created_by.get_full_name|default:"No especificado" }}</td>
+                    <td style="text-align: center;">
+                        {% with event.attachment_set.count as att_count %}
+                            {% if att_count > 0 %}
+                                {{ att_count }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        {% endwith %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p style="text-align: center; padding: 20px; color: #666;">
+            No se encontraron eventos para los criterios especificados.
+        </p>
+        {% endif %}
+    </div>
+    
+    <!-- Archivos Adjuntos -->
+    {% if attachments %}
+    <div class="attachments-section">
+        <h3>📎 Archivos Adjuntos ({{ total_attachments }})</h3>
+        <div class="attachments-list">
+            {% for attachment in attachments %}
+            <div class="attachment-item">
+                <strong>{{ attachment.event.event_type.name }}</strong> - 
+                {{ attachment.event.timestamp|date:"d/m/Y H:i" }}: 
+                {{ attachment.file.name|truncatechars:60 }}
+                ({{ attachment.file.size|filesizeformat }})
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Footer -->
+    <div class="footer">
+        <p>
+            Este documento ha sido generado automáticamente por el Sistema de Trazabilidad Agrícola.<br>
+            Fecha de generación: {{ generated_at|date:"d/m/Y H:i:s" }}
+        </p>
+    </div>
+    
+    <!-- Sección de Firmas (opcional) -->
+    <div class="signature-section">
+        <div class="signature-box">
+            <div class="signature-line">
+                Firma del Responsable Técnico
+            </div>
+        </div>
+    </div>
+</body>
+</html>

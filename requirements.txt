@@ -23,6 +23,10 @@ crispy-bootstrap5==2024.10
 Pillow==11.0.0
 django-storages==1.14.4
 
+# Reportes y exportación
+WeasyPrint==62.3
+openpyxl==3.1.5
+
 # Utilidades
 python-dotenv==1.0.1
 pytz==2024.2
