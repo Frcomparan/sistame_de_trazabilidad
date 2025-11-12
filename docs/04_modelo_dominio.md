@@ -4,7 +4,7 @@
 
 ## 1. Introducción
 
-Este documento describe las entidades del dominio, sus atributos, relaciones y comportamientos. El modelo está diseñado para soportar el sistema de eventos con tipos predefinidos, manteniendo la integridad referencial.
+Este documento describe las entidades del dominio, sus atributos, relaciones y comportamientos. El modelo está diseñado para soportar el sistema de eventos con **10 tipos de eventos fijos**, cada uno con su propia tabla en la base de datos, garantizando integridad referencial y validaciones específicas por tipo de evento.
 
 ## 2. Diagrama de Clases (PlantUML)
 
@@ -64,14 +64,13 @@ ENTITY EventType {
   + name: String {unique}
   + category: String
   + description: Text
-  + schema: JSON
   + is_active: Boolean
   + icon: String
   + color: String
   + created_at: DateTime
   + updated_at: DateTime
   --
-  + validate_payload(payload: JSON): Boolean
+  + get_active_events(): List[Event]
 }
 
 ENTITY Event {
@@ -80,7 +79,6 @@ ENTITY Event {
   + field: Field
   + campaign: Campaign
   + timestamp: DateTime
-  + payload: JSON
   + observations: Text
   + created_by: User
   + created_at: DateTime
@@ -89,6 +87,102 @@ ENTITY Event {
   + validate(): Boolean
   + get_summary(): String
   + get_attachments(): List[Attachment]
+}
+
+' === Eventos Específicos (Herencia de Event) ===
+ENTITY IrrigationEvent {
+  + metodo: String
+  + duracion_minutos: Integer
+  + fuente_agua: String
+  + volumen_m3: Decimal
+  + presion_bar: Decimal
+  + ce_uScm: Decimal
+  + ph: Decimal
+}
+
+ENTITY FertilizationEvent {
+  + tipo_fertilizante: String
+  + nombre_producto: String
+  + dosis_total_kg: Decimal
+  + metodo_aplicacion: String
+  + area_aplicada_ha: Decimal
+  + npk_formula: String
+}
+
+ENTITY PhytosanitaryEvent {
+  + tipo_producto: String
+  + nombre_producto: String
+  + ingrediente_activo: String
+  + dosis_total_l_kg: Decimal
+  + metodo_aplicacion: String
+  + area_tratada_ha: Decimal
+  + plagas_objetivo: String
+  + intervalo_seguridad_dias: Integer
+}
+
+ENTITY MaintenanceEvent {
+  + tipo_labor: String
+  + descripcion: String
+  + area_intervenida_ha: Decimal
+  + horas_hombre: Decimal
+  + maquinaria_utilizada: String
+}
+
+ENTITY MonitoringEvent {
+  + tipo_monitoreo: String
+  + parametros_medidos: String
+  + resultados: String
+  + area_muestreada_ha: Decimal
+  + numero_muestras: Integer
+  + hallazgos_relevantes: String
+}
+
+ENTITY OutbreakEvent {
+  + tipo_organismo: String
+  + nombre_organismo: String
+  + nivel_severidad: String
+  + area_afectada_ha: Decimal
+  + poblacion_estimada: String
+  + estado_fenologico: String
+  + acciones_tomadas: String
+}
+
+ENTITY ClimateEvent {
+  + tipo_evento: String
+  + temperatura_min_c: Decimal
+  + temperatura_max_c: Decimal
+  + precipitacion_mm: Decimal
+  + humedad_relativa_pct: Decimal
+  + velocidad_viento_kmh: Decimal
+  + descripcion_condiciones: String
+}
+
+ENTITY HarvestEvent {
+  + tipo_cosecha: String
+  + cantidad_kg: Decimal
+  + calidad: String
+  + destino: String
+  + cuadrillas: Integer
+  + horas_cosecha: Decimal
+}
+
+ENTITY PostHarvestEvent {
+  + tipo_proceso: String
+  + lote_procesado: String
+  + cantidad_entrada_kg: Decimal
+  + cantidad_salida_kg: Decimal
+  + merma_pct: Decimal
+  + temperatura_almacen_c: Decimal
+  + duracion_proceso_horas: Decimal
+}
+
+ENTITY LaborCostEvent {
+  + tipo_labor: String
+  + descripcion: String
+  + numero_trabajadores: Integer
+  + horas_totales: Decimal
+  + costo_total_mxn: Decimal
+  + tipo_pago: String
 }
 
 ENTITY Attachment {
@@ -171,6 +265,16 @@ Campaign "1" -- "0..*" Event : includes
 EventType "1" -- "0..*" Event : defines_structure_for
 
 Event "1" -- "0..*" Attachment : has
+Event <|-- IrrigationEvent : extends
+Event <|-- FertilizationEvent : extends
+Event <|-- PhytosanitaryEvent : extends
+Event <|-- MaintenanceEvent : extends
+Event <|-- MonitoringEvent : extends
+Event <|-- OutbreakEvent : extends
+Event <|-- ClimateEvent : extends
+Event <|-- HarvestEvent : extends
+Event <|-- PostHarvestEvent : extends
+Event <|-- LaborCostEvent : extends
 
 Station "1" -- "0..*" Variable : records
 
@@ -257,83 +361,44 @@ User "*" -- "1" Role : has
 
 ### 3.4 EventType (Tipo de Evento)
 
-**Descripción**: Define la estructura y validación de un tipo de evento. Los tipos de eventos son predefinidos (10 tipos fijos) y se cargan mediante el comando `setup_event_types`.
+**Descripción**: Define los metadatos de un tipo de evento. Los tipos de eventos son **10 tipos fijos predefinidos** que se cargan mediante el comando `setup_event_types`. Cada tipo de evento tiene su propia tabla con campos específicos.
 
 **Atributos**:
 | Atributo | Tipo | Descripción | Validación |
 |----------|------|-------------|------------|
 | id | Integer | Identificador | PK |
 | name | String(100) | Nombre | Requerido, único |
-| category | String(50) | Categoría | riego/fertilización/etc. |
+| category | String(50) | Categoría | irrigation/fertilization/etc. |
 | description | Text | Descripción | Opcional |
-| schema | JSON | JSON Schema | Requerido, válido |
 | is_active | Boolean | Activo | Default True |
 | icon | String(50) | Icono (CSS class) | Opcional |
 | color | String(7) | Color hex | Ej: #28a745 |
 
-**Ejemplo de Schema**:
-```json
-{
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "type": "object",
-  "title": "Riego",
-  "properties": {
-    "metodo": {
-      "type": "string",
-      "enum": ["goteo", "microaspersion", "gravedad"],
-      "title": "Método de Riego",
-      "description": "Sistema utilizado"
-    },
-    "duracion_min": {
-      "type": "number",
-      "minimum": 0,
-      "maximum": 1440,
-      "title": "Duración (min)",
-      "description": "Tiempo de riego en minutos"
-    },
-    "volumen_m3": {
-      "type": "number",
-      "minimum": 0,
-      "title": "Volumen (m³)",
-      "unit": "m³"
-    },
-    "presion_bar": {
-      "type": "number",
-      "minimum": 0,
-      "maximum": 10,
-      "title": "Presión (bar)",
-      "unit": "bar"
-    },
-    "ce_uScm": {
-      "type": "number",
-      "minimum": 0,
-      "title": "CE (µS/cm)",
-      "unit": "µS/cm"
-    },
-    "ph": {
-      "type": "number",
-      "minimum": 0,
-      "maximum": 14,
-      "title": "pH"
-    }
-  },
-  "required": ["metodo", "duracion_min"]
-}
-```
+**Tipos de Eventos Predefinidos**:
+
+1. **Aplicación de Riego** (irrigation) - Tabla: `irrigation_events`
+2. **Fertilización** (fertilization) - Tabla: `fertilization_events`
+3. **Aplicación Fitosanitaria** (phytosanitary) - Tabla: `phytosanitary_events`
+4. **Labores de Cultivo** (maintenance) - Tabla: `maintenance_events`
+5. **Monitoreo** (monitoring) - Tabla: `monitoring_events`
+6. **Brotes y Plagas** (other) - Tabla: `outbreak_events`
+7. **Eventos Climáticos** (other) - Tabla: `climate_events`
+8. **Cosecha** (harvest) - Tabla: `harvest_events`
+9. **Poscosecha** (postharvest) - Tabla: `postharvest_events`
+10. **Mano de Obra y Costos** (other) - Tabla: `labor_cost_events`
 
 **Métodos de Negocio**:
-- `validate_payload(payload)`: Valida datos contra el schema
+- `get_active_events()`: Retorna eventos asociados activos
 
 **Reglas de Negocio**:
-- El schema debe ser un JSON Schema válido versión 7
-- Los tipos de eventos son predefinidos (10 tipos fijos)
+- Los tipos de eventos son fijos (no se pueden crear dinámicamente)
 - El nombre debe ser único
-- Los administradores pueden modificar esquemas existentes (con precaución)
-- Los administradores pueden desactivar tipos no utilizados
+- Los administradores pueden activar/desactivar tipos
+- La desactivación no elimina eventos existentes
 
-### 3.5 Event (Instancia de Evento)
+### 3.5 Event (Instancia de Evento Base)
 
-**Descripción**: Registro concreto de un evento que ocurrió en campo.
+**Descripción**: Modelo base abstracto que contiene los campos comunes a todos los eventos. Los eventos reales se almacenan en tablas específicas que heredan de Event.
 
 **Atributos**:
 | Atributo | Tipo | Descripción | Validación |
@@ -343,37 +408,151 @@ User "*" -- "1" Role : has
 | field | FK(Field) | Lote | Requerido, CASCADE |
 | campaign | FK(Campaign) | Campaña | Opcional, SET_NULL |
 | timestamp | DateTime | Fecha/hora evento | Requerido, con TZ |
-| payload | JSON | Datos capturados | Requerido, validado |
 | observations | Text | Observaciones | Opcional |
 | created_by | FK(User) | Usuario | SET_NULL |
 | created_at | DateTime | Fecha captura | Auto |
 | updated_at | DateTime | Última modificación | Auto |
 
-**Ejemplo de Payload**:
-```json
-{
-  "metodo": "goteo",
-  "duracion_min": 90,
-  "volumen_m3": 45.5,
-  "presion_bar": 1.8,
-  "ce_uScm": 850,
-  "ph": 6.7
-}
-```
-
 **Métodos de Negocio**:
-- `validate()`: Valida payload contra EventType.schema
+- `validate()`: Valida los campos del evento
 - `get_summary()`: Genera resumen legible
 - `get_attachments()`: Lista de archivos adjuntos
-- `to_dict()`: Serializa a diccionario
 
 **Reglas de Negocio**:
-- El payload DEBE pasar validación del schema
 - El timestamp no puede ser futuro (> now + 1 hora)
 - No puede modificarse el event_type una vez creado
 - Las modificaciones se registran en auditoría
 
-### 3.6 Attachment (Adjunto)
+### 3.6 Eventos Específicos
+
+Cada tipo de evento tiene su propia tabla con campos específicos. Todas heredan de `Event`.
+
+#### 3.6.1 IrrigationEvent (Aplicación de Riego)
+
+**Campos Específicos**:
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| metodo | String | Método de riego (Aspersión/Goteo/Surco/etc.) |
+| duracion_minutos | Integer | Duración en minutos |
+| fuente_agua | String | Origen del agua (Pozo/Río/Presa/etc.) |
+| volumen_m3 | Decimal | Volumen aplicado en m³ |
+| presion_bar | Decimal | Presión del sistema (0-10 bar) |
+| ce_uScm | Decimal | Conductividad eléctrica (µS/cm) |
+| ph | Decimal | pH del agua (0-14) |
+
+#### 3.6.2 FertilizationEvent (Fertilización)
+
+**Campos Específicos**:
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| tipo_fertilizante | String | Tipo (Químico/Orgánico/Foliar/etc.) |
+| nombre_producto | String | Nombre comercial del producto |
+| dosis_total_kg | Decimal | Cantidad aplicada en kg |
+| metodo_aplicacion | String | Método (Fertirrigación/Aplicación directa/etc.) |
+| area_aplicada_ha | Decimal | Área cubierta en hectáreas |
+| npk_formula | String | Fórmula NPK (ej: 15-15-15) |
+
+#### 3.6.3 PhytosanitaryEvent (Aplicación Fitosanitaria)
+
+**Campos Específicos**:
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| tipo_producto | String | Tipo (Insecticida/Fungicida/Herbicida/etc.) |
+| nombre_producto | String | Nombre comercial |
+| ingrediente_activo | String | Ingrediente activo principal |
+| dosis_total_l_kg | Decimal | Cantidad aplicada (L o kg) |
+| metodo_aplicacion | String | Método de aplicación |
+| area_tratada_ha | Decimal | Área tratada en hectáreas |
+| plagas_objetivo | String | Plagas o enfermedades objetivo |
+| intervalo_seguridad_dias | Integer | Días hasta cosecha segura |
+
+#### 3.6.4 MaintenanceEvent (Labores de Cultivo)
+
+**Campos Específicos**:
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| tipo_labor | String | Tipo (Poda/Deshierbe/Raleo/etc.) |
+| descripcion | String | Descripción detallada |
+| area_intervenida_ha | Decimal | Área trabajada |
+| horas_hombre | Decimal | Horas de trabajo |
+| maquinaria_utilizada | String | Equipos utilizados |
+
+#### 3.6.5 MonitoringEvent (Monitoreo)
+
+**Campos Específicos**:
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| tipo_monitoreo | String | Tipo (Fitosanitario/Fenológico/Suelo/etc.) |
+| parametros_medidos | String | Variables monitoreadas |
+| resultados | String | Resumen de resultados |
+| area_muestreada_ha | Decimal | Área muestreada |
+| numero_muestras | Integer | Cantidad de muestras |
+| hallazgos_relevantes | String | Hallazgos importantes |
+
+#### 3.6.6 OutbreakEvent (Brotes y Plagas)
+
+**Campos Específicos**:
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| tipo_organismo | String | Tipo (Plaga/Enfermedad/Maleza) |
+| nombre_organismo | String | Nombre científico o común |
+| nivel_severidad | String | Severidad (Bajo/Medio/Alto/Crítico) |
+| area_afectada_ha | Decimal | Área afectada |
+| poblacion_estimada | String | Estimación de población |
+| estado_fenologico | String | Estado del cultivo |
+| acciones_tomadas | String | Medidas aplicadas |
+
+#### 3.6.7 ClimateEvent (Eventos Climáticos)
+
+**Campos Específicos**:
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| tipo_evento | String | Tipo (Lluvia/Granizo/Helada/etc.) |
+| temperatura_min_c | Decimal | Temperatura mínima (°C) |
+| temperatura_max_c | Decimal | Temperatura máxima (°C) |
+| precipitacion_mm | Decimal | Precipitación (mm) |
+| humedad_relativa_pct | Decimal | Humedad relativa (%) |
+| velocidad_viento_kmh | Decimal | Velocidad del viento (km/h) |
+| descripcion_condiciones | String | Descripción de condiciones |
+
+#### 3.6.8 HarvestEvent (Cosecha)
+
+**Campos Específicos**:
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| tipo_cosecha | String | Tipo (Comercial/Industrial/Muestra) |
+| cantidad_kg | Decimal | Cantidad cosechada (kg) |
+| calidad | String | Calidad (Primera/Segunda/Tercera) |
+| destino | String | Destino (Mercado/Industria/etc.) |
+| cuadrillas | Integer | Número de cuadrillas |
+| horas_cosecha | Decimal | Horas de trabajo |
+
+#### 3.6.9 PostHarvestEvent (Poscosecha)
+
+**Campos Específicos**:
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| tipo_proceso | String | Proceso (Lavado/Encerado/Empaque/etc.) |
+| lote_procesado | String | Identificador del lote |
+| cantidad_entrada_kg | Decimal | Cantidad entrada (kg) |
+| cantidad_salida_kg | Decimal | Cantidad salida (kg) |
+| merma_pct | Decimal | Merma (%) |
+| temperatura_almacen_c | Decimal | Temperatura de almacén (°C) |
+| duracion_proceso_horas | Decimal | Duración del proceso (horas) |
+
+#### 3.6.10 LaborCostEvent (Mano de Obra y Costos)
+
+**Campos Específicos**:
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| tipo_labor | String | Tipo de trabajo |
+| descripcion | String | Descripción del trabajo |
+| numero_trabajadores | Integer | Cantidad de trabajadores |
+| horas_totales | Decimal | Horas totales trabajadas |
+| costo_total_mxn | Decimal | Costo total (MXN) |
+| tipo_pago | String | Forma de pago (Jornal/Destajo/etc.) |
+
+### 3.7 Attachment (Adjunto)
 
 **Descripción**: Archivo asociado a un evento (foto, PDF, CSV).
 

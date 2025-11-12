@@ -217,33 +217,55 @@ class PhytosanitaryEventForm(BaseEventForm):
         ]
         widgets = {
             **BaseEventForm.Meta.widgets,
-            'producto': forms.TextInput(attrs={'class': 'form-control'}),
-            'ingrediente_activo': forms.TextInput(attrs={'class': 'form-control'}),
+            'producto': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ej: Mancozeb 80%, Cupravit'
+            }),
+            'ingrediente_activo': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ej: Mancozeb, Oxicloruro de cobre'
+            }),
             'tipo_producto': forms.Select(attrs={'class': 'form-select'}),
-            'objetivo': forms.TextInput(attrs={'class': 'form-control'}),
+            'objetivo': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ej: Antracnosis, Trips, Malezas'
+            }),
             'metodo_aplicacion': forms.Select(attrs={'class': 'form-select'}),
             'dosis': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.01',
-                'min': 0
+                'min': 0,
+                'placeholder': 'Ej: 2.5'
             }),
-            'unidad_dosis': forms.TextInput(attrs={'class': 'form-control'}),
-            'lote_producto': forms.TextInput(attrs={'class': 'form-control'}),
+            'unidad_dosis': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ej: L/ha, kg/ha, mL/100L'
+            }),
+            'lote_producto': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ej: L2024-0315'
+            }),
             'volumen_caldo_l': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.01',
-                'min': 0
+                'min': 0,
+                'placeholder': 'Ej: 800'
             }),
             'presion_bar': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.01',
-                'min': 0
+                'min': 0,
+                'placeholder': 'Ej: 2.5'
             }),
             'intervalo_seguridad_dias': forms.NumberInput(attrs={
                 'class': 'form-control',
-                'min': 0
+                'min': 0,
+                'placeholder': 'Ej: 14'
             }),
-            'responsable_aplicacion': forms.TextInput(attrs={'class': 'form-control'}),
+            'responsable_aplicacion': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ej: Juan Pérez'
+            }),
             'eficacia_observada': forms.Select(attrs={'class': 'form-select'}),
             'fitotoxicidad': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
@@ -262,25 +284,32 @@ class MaintenanceEventForm(BaseEventForm):
         widgets = {
             **BaseEventForm.Meta.widgets,
             'actividad': forms.Select(attrs={'class': 'form-select'}),
-            'herramienta_equipo': forms.TextInput(attrs={'class': 'form-control'}),
+            'herramienta_equipo': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ej: Tijeras de podar, Motoguadaña'
+            }),
             'numero_jornales': forms.NumberInput(attrs={
                 'class': 'form-control',
-                'min': 1
+                'min': 1,
+                'placeholder': 'Ej: 3'
             }),
             'horas_hombre': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.01',
-                'min': 0
+                'min': 0,
+                'placeholder': 'Ej: 24'
             }),
             'objetivo': forms.Textarea(attrs={
                 'class': 'form-control',
-                'rows': 2
+                'rows': 2,
+                'placeholder': 'Ej: Eliminar brotes improductivos, mejorar aireación'
             }),
             'porcentaje_completado': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.01',
                 'min': 0,
-                'max': 100
+                'max': 100,
+                'placeholder': 'Ej: 75'
             }),
             'herramientas_desinfectadas': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
@@ -297,18 +326,26 @@ class MonitoringEventForm(BaseEventForm):
         ]
         widgets = {
             **BaseEventForm.Meta.widgets,
-            'plaga_enfermedad': forms.TextInput(attrs={'class': 'form-control'}),
+            'plaga_enfermedad': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ej: Trips, Antracnosis, Ácaro'
+            }),
             'metodo_muestreo': forms.Select(attrs={'class': 'form-select'}),
             'incidencia': forms.Select(attrs={'class': 'form-select'}),
             'severidad': forms.Select(attrs={'class': 'form-select'}),
-            'ubicacion_campo': forms.TextInput(attrs={'class': 'form-control'}),
+            'ubicacion_campo': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ej: Sección norte, Hileras 1-10'
+            }),
             'numero_muestras': forms.NumberInput(attrs={
                 'class': 'form-control',
-                'min': 1
+                'min': 1,
+                'placeholder': 'Ej: 20'
             }),
             'accion_recomendada': forms.Textarea(attrs={
                 'class': 'form-control',
-                'rows': 2
+                'rows': 2,
+                'placeholder': 'Ej: Aplicar insecticida en próxima semana si aumenta población'
             }),
         }
 
@@ -325,23 +362,29 @@ class OutbreakEventForm(BaseEventForm):
         ]
         widgets = {
             **BaseEventForm.Meta.widgets,
-            'tipo_problema': forms.TextInput(attrs={'class': 'form-control'}),
+            'tipo_problema': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ej: Plaga de Trips, Gomosis, Clorosis'
+            }),
             'severidad': forms.Select(attrs={'class': 'form-select'}),
             'metodo_deteccion': forms.Select(attrs={'class': 'form-select'}),
             'area_afectada_ha': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.0001',
-                'min': 0
+                'min': 0,
+                'placeholder': 'Ej: 0.5'
             }),
             'porcentaje_afectacion': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.01',
                 'min': 0,
-                'max': 100
+                'max': 100,
+                'placeholder': 'Ej: 15'
             }),
             'accion_inmediata': forms.Textarea(attrs={
                 'class': 'form-control',
-                'rows': 3
+                'rows': 3,
+                'placeholder': 'Ej: Aplicación de producto fitosanitario, aislamiento de zona afectada'
             }),
             'requiere_tratamiento': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
@@ -363,35 +406,41 @@ class ClimateEventForm(BaseEventForm):
                 'class': 'form-control',
                 'step': '0.01',
                 'min': -20,
-                'max': 50
+                'max': 50,
+                'placeholder': 'Ej: 32.5'
             }),
             'temperatura_min': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.01',
                 'min': -20,
-                'max': 50
+                'max': 50,
+                'placeholder': 'Ej: 18.2'
             }),
             'humedad_relativa': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.01',
                 'min': 0,
-                'max': 100
+                'max': 100,
+                'placeholder': 'Ej: 65'
             }),
             'precipitacion_mm': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.01',
-                'min': 0
+                'min': 0,
+                'placeholder': 'Ej: 25.5'
             }),
             'velocidad_viento_ms': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.01',
-                'min': 0
+                'min': 0,
+                'placeholder': 'Ej: 3.5'
             }),
             'viento': forms.Select(attrs={'class': 'form-select'}),
             'radiacion_solar_wm2': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.01',
-                'min': 0
+                'min': 0,
+                'placeholder': 'Ej: 850'
             }),
         }
     
@@ -421,26 +470,33 @@ class HarvestEventForm(BaseEventForm):
         ]
         widgets = {
             **BaseEventForm.Meta.widgets,
-            'variedad': forms.TextInput(attrs={'class': 'form-control'}),
+            'variedad': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ej: Limón Persa, Limón Mexicano'
+            }),
             'volumen_kg': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.01',
-                'min': 0
+                'min': 0,
+                'placeholder': 'Ej: 1500'
             }),
             'rendimiento_kg_ha': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.01',
-                'min': 0
+                'min': 0,
+                'placeholder': 'Ej: 18500'
             }),
             'calidad': forms.Select(attrs={'class': 'form-select'}),
             'numero_trabajadores': forms.NumberInput(attrs={
                 'class': 'form-control',
-                'min': 1
+                'min': 1,
+                'placeholder': 'Ej: 8'
             }),
             'horas_trabajo': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.01',
-                'min': 0
+                'min': 0,
+                'placeholder': 'Ej: 64'
             }),
             'fecha_inicio': forms.DateInput(attrs={
                 'type': 'date',
@@ -479,25 +535,34 @@ class PostHarvestEventForm(BaseEventForm):
         ]
         widgets = {
             **BaseEventForm.Meta.widgets,
-            'producto': forms.TextInput(attrs={'class': 'form-control'}),
+            'producto': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ej: Limón Persa calibre 150'
+            }),
             'cantidad_kg': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.01',
-                'min': 0
+                'min': 0,
+                'placeholder': 'Ej: 2500'
             }),
             'temperatura': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.01',
                 'min': -5,
-                'max': 30
+                'max': 30,
+                'placeholder': 'Ej: 10'
             }),
             'humedad': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.01',
                 'min': 0,
-                'max': 100
+                'max': 100,
+                'placeholder': 'Ej: 85'
             }),
-            'tipo_almacenamiento': forms.TextInput(attrs={'class': 'form-control'}),
+            'tipo_almacenamiento': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ej: Cámara frigorífica, Almacén techado'
+            }),
             'fecha_ingreso': forms.DateInput(attrs={
                 'type': 'date',
                 'class': 'form-control'
@@ -508,7 +573,8 @@ class PostHarvestEventForm(BaseEventForm):
             }),
             'condiciones_observadas': forms.Textarea(attrs={
                 'class': 'form-control',
-                'rows': 3
+                'rows': 3,
+                'placeholder': 'Ej: Producto en buen estado, sin daños mecánicos visibles'
             }),
         }
 
@@ -527,26 +593,30 @@ class LaborCostEventForm(BaseEventForm):
             'actividad': forms.Select(attrs={'class': 'form-select'}),
             'numero_trabajadores': forms.NumberInput(attrs={
                 'class': 'form-control',
-                'min': 1
+                'min': 1,
+                'placeholder': 'Ej: 5'
             }),
             'horas_trabajo': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.01',
                 'min': 0,
-                'id': 'id_horas_trabajo'
+                'id': 'id_horas_trabajo',
+                'placeholder': 'Ej: 40'
             }),
             'costo_hora': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.01',
                 'min': 0,
-                'id': 'id_costo_hora'
+                'id': 'id_costo_hora',
+                'placeholder': 'Ej: 25.50'
             }),
             'costo_total': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.01',
                 'min': 0,
                 'id': 'id_costo_total',
-                'readonly': True
+                'readonly': True,
+                'placeholder': 'Se calcula automáticamente'
             }),
         }
     

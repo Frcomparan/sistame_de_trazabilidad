@@ -4,30 +4,40 @@
 
 ## 1. Introducción
 
-El **Sistema de Eventos** es el núcleo del sistema de trazabilidad. El sistema incluye 10 tipos de eventos predefinidos que cubren las principales actividades agrícolas. Estos eventos están configurados con esquemas JSON que definen los campos requeridos y sus validaciones.
+El **Sistema de Eventos** es el núcleo del sistema de trazabilidad. El sistema incluye **10 tipos de eventos predefinidos** que cubren las principales actividades agrícolas. Cada tipo de evento tiene su propia tabla en la base de datos con campos específicos y validaciones.
 
-> **Nota MVP**: Para simplificar el sistema y reducir la complejidad, los tipos de eventos son **fijos y predefinidos**. No se permite la creación dinámica de nuevos tipos de eventos por parte de los administradores. Si se requiere un nuevo tipo de evento, debe ser agregado mediante código y migración.
+> **Arquitectura**: Para garantizar integridad referencial y optimizar el rendimiento, cada tipo de evento se almacena en su propia tabla que hereda de la tabla base `events`. Esto elimina la necesidad de schemas JSON dinámicos y permite validaciones a nivel de base de datos.
 
 ## 2. Concepto y Arquitectura
 
-### 2.1 Separación de Definición e Instancia
+### 2.1 Herencia de Tablas Multi-Table
 
 ```
-┌──────────────────────────────────────────────┐
-│          EventType (Definición)              │
-│  - Define QUÉ campos tiene el evento         │
-│  - Schema de validación (JSON Schema)        │
-│  - Metadata (nombre, categoría, icono)       │
-│  - PREDEFINIDO (10 tipos fijos)              │
-└──────────────────┬───────────────────────────┘
+┌─────────────────────────────────────────────┐
+│       EventType (Metadatos)                 │
+│  - Define nombre, categoría, icono, color   │
+│  - 10 tipos predefinidos                    │
+└──────────────────┬──────────────────────────┘
                    │ 1:N
                    ↓
-┌──────────────────────────────────────────────┐
-│            Event (Instancia)                 │
-│  - Datos reales capturados                   │
-│  - Payload en JSONB (validado contra schema) │
-│  - Metadata (cuándo, dónde, quién)           │
-└──────────────────────────────────────────────┘
+┌─────────────────────────────────────────────┐
+│       Event (Tabla Base)                    │
+│  - Campos comunes: field, campaign,         │
+│    timestamp, observations, created_by      │
+└──────────────────┬──────────────────────────┘
+                   │
+       ┌───────────┼───────────┬──────────┐
+       ↓           ↓           ↓          ↓
+┌──────────┐ ┌─────────┐ ┌─────────┐ ┌──────────┐
+│Irrigation│ │Fertiliz.│ │Phytosan.│ │Harvest   │
+│Event     │ │Event    │ │Event    │ │Event     │
+│          │ │         │ │         │ │          │
+│+ metodo  │ │+ tipo   │ │+ tipo   │ │+ tipo    │
+│+ duracion│ │+ nombre │ │+ nombre │ │+ cantidad│
+│+ volumen │ │+ dosis  │ │+ dosis  │ │+ calidad │
+│+ presion │ │+ npk    │ │+ plagas │ │+ destino │
+└──────────┘ └─────────┘ └─────────┘ └──────────┘
+    ...y 6 tablas más...
 ```
 
 ### 2.2 Flujo de Trabajo
@@ -35,45 +45,55 @@ El **Sistema de Eventos** es el núcleo del sistema de trazabilidad. El sistema 
 ```
 ┌─────────────┐
 │ Sistema     │
-│ inicializa  │──┐
-│ 10 eventos  │  │ Eventos predefinidos
-└─────────────┘  │ cargados al inicio
+│ carga 10    │──┐ Comando: setup_event_types
+│ EventTypes  │  │ Carga metadatos en tabla
+└─────────────┘  │ event_types
                  ↓
 ┌──────────────────────────────────┐
-│ Sistema muestra formulario        │
-│ según tipo de evento seleccionado │
+│ Usuario selecciona tipo evento   │
+│ (ej: "Aplicación de Riego")      │
 └──────────────┬───────────────────┘
                │
-               │ Técnico captura
                ↓
 ┌──────────────────────────────────┐
-│ Sistema valida payload contra    │
-│ schema antes de guardar          │
+│ Sistema muestra formulario       │
+│ específico con campos para       │
+│ IrrigationEvent                  │
+└──────────────┬───────────────────┘
+               │
+               │ Técnico captura datos
+               ↓
+┌──────────────────────────────────┐
+│ Django valida campos según       │
+│ modelo IrrigationEvent           │
+│ (validators, constraints)        │
 └──────────────┬───────────────────┘
                │
                │ Si válido
                ↓
 ┌──────────────────────────────────┐
-│ Event guardado en BD (JSONB)     │
+│ Registro guardado en tabla       │
+│ irrigation_events (con FK a      │
+│ events)                          │
 └──────────────────────────────────┘
 ```
 
 ## 3. Tipos de Eventos Predefinidos
 
-El sistema incluye los siguientes 10 tipos de eventos:
+El sistema incluye los siguientes 10 tipos de eventos, cada uno con su propia tabla:
 
-1. **Aplicación de Riego** - Registro de aplicaciones de riego con diferentes métodos
-2. **Aplicación de Fertilizante** - Fertilización al suelo o foliar
-3. **Aplicación Fitosanitaria** - Aplicación de fungicidas, insecticidas, herbicidas
-4. **Labores de Cultivo** - Actividades de mantenimiento (poda, deshierbe, etc.)
-5. **Monitoreo de Plagas** - Inspección y monitoreo preventivo
-6. **Brote de Plaga/Enfermedad** - Registro de brotes severos
-7. **Condiciones Climáticas** - Registro de variables meteorológicas
-8. **Cosecha** - Actividades de recolección y clasificación
-9. **Almacenamiento Poscosecha** - Control de almacenamiento del producto
-10. **Mano de Obra y Costos** - Registro de recursos humanos y costos
+1. **Aplicación de Riego** (`irrigation_events`) - Registro de riegos con método, duración, volumen, CE, pH
+2. **Fertilización** (`fertilization_events`) - Aplicación de fertilizantes con tipo, dosis, fórmula NPK
+3. **Aplicación Fitosanitaria** (`phytosanitary_events`) - Fungicidas, insecticidas con intervalo de seguridad
+4. **Labores de Cultivo** (`maintenance_events`) - Poda, deshierbe, raleo, etc.
+5. **Monitoreo** (`monitoring_events`) - Inspecciones fitosanitarias, fenológicas, de suelo
+6. **Brotes y Plagas** (`outbreak_events`) - Registro de brotes con severidad y acciones
+7. **Eventos Climáticos** (`climate_events`) - Temperatura, precipitación, humedad, viento
+8. **Cosecha** (`harvest_events`) - Cantidad, calidad, destino, cuadrillas
+9. **Poscosecha** (`postharvest_events`) - Procesos de lavado, encerado, empaque, merma
+10. **Mano de Obra y Costos** (`labor_cost_events`) - Trabajadores, horas, costos
 
-Estos eventos se crean automáticamente al ejecutar el comando `setup_event_types` (ver [documentación del comando](./comando_setup_event_types.md)).
+Estos tipos se crean automáticamente al ejecutar el comando `python manage.py setup_event_types` (ver [documentación del comando](./comando_setup_event_types.md)).
 
 ## 4. Componentes Principales
 
@@ -82,72 +102,127 @@ Estos eventos se crean automáticamente al ejecutar el comando `setup_event_type
 ```python
 # events/models.py
 from django.db import models
-import jsonschema
 
 class EventType(models.Model):
+    """Metadatos de tipos de eventos (10 fijos)."""
     CATEGORIES = [
-        ('riego', 'Riego'),
-        ('fertilizacion', 'Fertilización'),
-        ('fitosanitarios', 'Fitosanitarios'),
-        ('labores', 'Labores Culturales'),
-        ('monitoreo', 'Monitoreo'),
-        ('brotes', 'Brotes'),
-        ('clima', 'Clima'),
-        ('cosecha', 'Cosecha'),
-        ('poscosecha', 'Poscosecha'),
-        ('mano_obra', 'Mano de Obra'),
-        ('otro', 'Otro'),
+        ('irrigation', 'Riego'),
+        ('fertilization', 'Fertilización'),
+        ('phytosanitary', 'Fitosanitarios'),
+        ('maintenance', 'Labores de Cultivo'),
+        ('monitoring', 'Monitoreo'),
+        ('harvest', 'Cosecha'),
+        ('postharvest', 'Poscosecha'),
+        ('other', 'Otro'),
     ]
     
+    id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=100, unique=True)
     category = models.CharField(max_length=50, choices=CATEGORIES)
-    description = models.TextField(blank=True)
-    schema = models.JSONField()  # JSON Schema
+    description = models.TextField(blank=True, null=True)
     is_active = models.BooleanField(default=True)
-    icon = models.CharField(max_length=50, blank=True)
-    color = models.CharField(max_length=7, blank=True)
+    icon = models.CharField(max_length=50, blank=True, null=True)
+    color = models.CharField(max_length=7, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
-    def clean(self):
-        """Valida que el schema sea JSON Schema válido"""
-        try:
-            # Validar sintaxis JSON Schema
-            jsonschema.Draft7Validator.check_schema(self.schema)
-        except jsonschema.SchemaError as e:
-            raise ValidationError(f'Schema inválido: {e.message}')
-    
-    def validate_payload(self, payload):
-        """Valida un payload contra este schema"""
-        try:
-            jsonschema.validate(payload, self.schema)
-            return True
-        except jsonschema.ValidationError as e:
-            raise ValidationError(f'Payload inválido: {e.message}')
+    class Meta:
+        db_table = 'event_types'
+        ordering = ['category', 'name']
     
     def __str__(self):
-        return self.name
+        return f"{self.name} ({self.get_category_display()})"
 ```
 
-> **Nota**: Se eliminó el campo `version` ya que los eventos son fijos y no requieren versionado dinámico.
-
-### 4.2 Event (Modelo)
+### 4.2 Event (Modelo Base)
 
 ```python
 # events/models.py
+from django.db import models
+import uuid
+
 class Event(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4)
-    event_type = models.ForeignKey(EventType, on_delete=models.PROTECT)
-    field = models.ForeignKey('catalogs.Field', on_delete=models.CASCADE)
-    campaign = models.ForeignKey('catalogs.Campaign', on_delete=models.SET_NULL, null=True)
+    """Modelo base para todos los eventos."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    event_type = models.ForeignKey(EventType, on_delete=models.PROTECT, related_name='events')
+    field = models.ForeignKey('catalogs.Field', on_delete=models.CASCADE, related_name='events')
+    campaign = models.ForeignKey('catalogs.Campaign', on_delete=models.SET_NULL, null=True, blank=True)
     timestamp = models.DateTimeField()
-    payload = models.JSONField()  # Datos según schema
-    observations = models.TextField(blank=True)
-    created_by = models.ForeignKey('auth.User', on_delete=models.SET_NULL, null=True)
+    observations = models.TextField(blank=True, null=True)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
+    class Meta:
+        db_table = 'events'
+        ordering = ['-timestamp']
+    
     def clean(self):
+        """Validación: timestamp no más de 1 hora en el futuro"""
+        super().clean()
+        max_timestamp = timezone.now() + timedelta(hours=1)
+        if self.timestamp and self.timestamp > max_timestamp:
+            raise ValidationError({
+                'timestamp': f'El timestamp no puede estar más de 1 hora en el futuro.'
+            })
+    
+    def __str__(self):
+        return f"{self.event_type.name} - {self.field.name} @ {self.timestamp}"
+```
+
+### 4.3 Ejemplo: IrrigationEvent (Modelo Específico)
+
+```python
+# events/models.py
+class IrrigationEvent(Event):
+    """Evento de aplicación de riego."""
+    METHOD_CHOICES = [
+        ('Aspersión', 'Aspersión'),
+        ('Goteo', 'Goteo'),
+        ('Surco', 'Surco'),
+        ('Pivote', 'Pivote'),
+        ('Manual', 'Manual'),
+        ('Microaspersión', 'Microaspersión'),
+    ]
+    
+    WATER_SOURCE_CHOICES = [
+        ('Pozo', 'Pozo'),
+        ('Río', 'Río'),
+        ('Presa', 'Presa'),
+        ('Red municipal', 'Red municipal'),
+        ('Otro', 'Otro'),
+    ]
+    
+    metodo = models.CharField(max_length=50, choices=METHOD_CHOICES)
+    duracion_minutos = models.IntegerField(validators=[MinValueValidator(1)])
+    fuente_agua = models.CharField(max_length=50, choices=WATER_SOURCE_CHOICES)
+    volumen_m3 = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True,
+        validators=[MinValueValidator(0)]
+    )
+    presion_bar = models.DecimalField(
+        max_digits=5, decimal_places=2, null=True, blank=True,
+        validators=[MinValueValidator(0), MaxValueValidator(10)]
+    )
+    ce_uScm = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True,
+        validators=[MinValueValidator(0)]
+    )
+    ph = models.DecimalField(
+        max_digits=4, decimal_places=2, null=True, blank=True,
+        validators=[MinValueValidator(0), MaxValueValidator(14)]
+    )
+    
+    class Meta:
+        db_table = 'irrigation_events'
+        verbose_name = "Evento de Riego"
+        verbose_name_plural = "Eventos de Riego"
+    
+    def __str__(self):
+        return f"Riego {self.metodo} - {self.duracion_minutos} min"
+```
+
+> **Nota**: Los otros 9 tipos de eventos siguen el mismo patrón: heredan de `Event` y agregan sus campos específicos con validadores Django.
         """Validación antes de guardar"""
         # Validar payload contra schema del EventType
         if self.event_type:

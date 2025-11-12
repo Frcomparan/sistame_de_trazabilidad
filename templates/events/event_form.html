@@ -93,7 +93,7 @@
             {% else %}
                 <!-- Formulario específico del tipo de evento -->
                 {% if form %}
-                    <form method="post" id="eventForm">
+                    <form method="post" enctype="multipart/form-data" id="eventForm">
                         {% csrf_token %}
                         
                         <!-- Información Básica -->
@@ -262,6 +262,33 @@
                             {% if form.observations.errors %}
                                 <div class="text-danger small">{{ form.observations.errors }}</div>
                             {% endif %}
+                        </div>
+
+                        <!-- Archivos Adjuntos -->
+                        <div class="mb-4">
+                            <h5 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-paperclip"></i> Archivos Adjuntos
+                            </h5>
+                            
+                            <div class="mb-3">
+                                <label for="attachments" class="form-label">
+                                    Adjuntar archivos (opcional)
+                                    <i class="bi bi-question-circle text-muted" 
+                                       data-bs-toggle="tooltip" 
+                                       title="Puedes adjuntar imágenes, documentos PDF, hojas de cálculo, etc."></i>
+                                </label>
+                                <input type="file" 
+                                       class="form-control" 
+                                       id="attachments" 
+                                       name="attachments" 
+                                       multiple
+                                       accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.csv">
+                                <div class="form-text">
+                                    <i class="bi bi-info-circle"></i>
+                                    Puedes seleccionar múltiples archivos. Tamaño máximo por archivo: 10 MB.
+                                    <br>Formatos aceptados: imágenes (JPG, PNG, etc.), PDF, Word, Excel, CSV.
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Errores generales del formulario -->

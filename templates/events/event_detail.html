@@ -208,6 +208,66 @@
                 </div>
             </div>
             {% endif %}
+
+            <!-- Archivos Adjuntos -->
+            {% if attachments %}
+            <div class="card mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-paperclip text-success"></i> Archivos Adjuntos
+                        <span class="badge bg-success ms-2">{{ attachments|length }}</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        {% for attachment in attachments %}
+                        <div class="list-group-item px-0">
+                            <div class="d-flex align-items-start">
+                                <div class="me-3">
+                                    {% if attachment.mime_type|slice:":5" == "image" %}
+                                        <i class="bi bi-file-earmark-image text-primary" style="font-size: 1.5rem;"></i>
+                                    {% elif attachment.mime_type == "application/pdf" %}
+                                        <i class="bi bi-file-earmark-pdf text-danger" style="font-size: 1.5rem;"></i>
+                                    {% elif "spreadsheet" in attachment.mime_type or "excel" in attachment.mime_type or attachment.file_name|slice:"-4:" == ".xls" or attachment.file_name|slice:"-5:" == ".xlsx" %}
+                                        <i class="bi bi-file-earmark-excel text-success" style="font-size: 1.5rem;"></i>
+                                    {% elif "word" in attachment.mime_type or attachment.file_name|slice:"-4:" == ".doc" or attachment.file_name|slice:"-5:" == ".docx" %}
+                                        <i class="bi bi-file-earmark-word text-primary" style="font-size: 1.5rem;"></i>
+                                    {% elif attachment.file_name|slice:"-4:" == ".csv" %}
+                                        <i class="bi bi-file-earmark-spreadsheet text-info" style="font-size: 1.5rem;"></i>
+                                    {% else %}
+                                        <i class="bi bi-file-earmark text-secondary" style="font-size: 1.5rem;"></i>
+                                    {% endif %}
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1">{{ attachment.file_name }}</h6>
+                                    <p class="small text-muted mb-2">
+                                        <i class="bi bi-hdd"></i> {{ attachment.file_size|filesizeformat }}
+                                        <span class="mx-1">•</span>
+                                        <i class="bi bi-calendar3"></i> {{ attachment.uploaded_at|date:"d/m/Y H:i" }}
+                                        <span class="mx-1">•</span>
+                                        <i class="bi bi-person"></i> {{ attachment.uploaded_by.get_full_name|default:attachment.uploaded_by.username }}
+                                    </p>
+                                    <a href="{{ attachment.file.url }}" 
+                                       class="btn btn-sm btn-outline-primary" 
+                                       target="_blank"
+                                       download>
+                                        <i class="bi bi-download"></i> Descargar
+                                    </a>
+                                    {% if attachment.mime_type|slice:":5" == "image" %}
+                                        <a href="{{ attachment.file.url }}" 
+                                           class="btn btn-sm btn-outline-secondary" 
+                                           target="_blank">
+                                            <i class="bi bi-eye"></i> Ver
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
         </div>
 
         <!-- Sidebar -->

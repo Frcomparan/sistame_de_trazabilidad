@@ -4,16 +4,16 @@
 
 ## 1. Introducción
 
-Este documento especifica el esquema físico de la base de datos PostgreSQL, incluyendo tablas, índices, constraints y optimizaciones.
+Este documento especifica el esquema físico de la base de datos PostgreSQL, incluyendo tablas, índices, constraints y optimizaciones. El sistema utiliza una arquitectura de herencia de tablas donde cada tipo de evento tiene su propia tabla que hereda de la tabla base `events`.
 
 ## 2. Motor de Base de Datos
 
 **PostgreSQL 15+**
 
 **Razones de Selección**:
-- ✅ Soporte nativo de **JSONB** (para almacenar payloads de eventos)
-- ✅ **Índices GIN** para consultas eficientes en JSONB
+- ✅ Soporte de **herencia de tablas** (Table Inheritance)
 - ✅ **Transacciones ACID** completas
+- ✅ **Índices avanzados** para optimización de consultas
 - ✅ **Maduro y estable**
 - ✅ **Open source** (sin costos de licenciamiento)
 - ✅ **Docker ready** para despliegue simplificado
@@ -127,7 +127,7 @@ COMMENT ON TABLE stations IS 'Estaciones de monitoreo de variables ambientales';
 
 ### 4.4 Tabla: event_types
 
-Definición de tipos de evento predefinidos (10 tipos con esquemas JSON).
+Definición de tipos de evento predefinidos (10 tipos fijos con metadatos).
 
 ```sql
 CREATE TABLE event_types (
@@ -135,18 +135,15 @@ CREATE TABLE event_types (
     name VARCHAR(100) NOT NULL UNIQUE,
     category VARCHAR(50) NOT NULL,
     description TEXT,
-    schema JSONB NOT NULL,  -- JSON Schema de validación
-    version INT DEFAULT 1,
     is_active BOOLEAN DEFAULT TRUE,
-    icon VARCHAR(50),       -- CSS class para icono
+    icon VARCHAR(50),       -- CSS class para icono (ej: 'bi-droplet')
     color VARCHAR(7),       -- Color hex (ej: #28a745)
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
     
     CONSTRAINT check_event_type_category CHECK (category IN (
-        'riego', 'fertilizacion', 'fitosanitarios', 'labores',
-        'monitoreo', 'brotes', 'clima', 'cosecha', 'poscosecha',
-        'mano_obra', 'otro'
+        'irrigation', 'fertilization', 'phytosanitary', 'maintenance',
+        'monitoring', 'harvest', 'postharvest', 'other'
     ))
 );
 
@@ -154,7 +151,6 @@ CREATE TABLE event_types (
 CREATE INDEX idx_event_types_name ON event_types(name);
 CREATE INDEX idx_event_types_category ON event_types(category);
 CREATE INDEX idx_event_types_active ON event_types(is_active);
-CREATE INDEX idx_event_types_schema_gin ON event_types USING GIN(schema);
 
 -- Trigger
 CREATE TRIGGER update_event_types_updated_at
@@ -163,65 +159,23 @@ CREATE TRIGGER update_event_types_updated_at
     EXECUTE FUNCTION update_updated_at_column();
 
 COMMENT ON TABLE event_types IS 'Definiciones de tipos de eventos predefinidos (10 tipos fijos)';
-COMMENT ON COLUMN event_types.schema IS 'JSON Schema (draft-07) para validación del payload';
 ```
 
-**Ejemplo de registro**:
-```sql
-INSERT INTO event_types (name, category, description, schema, icon, color) VALUES (
-    'Riego',
-    'riego',
-    'Evento de aplicación de riego',
-    '{
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "type": "object",
-        "properties": {
-            "metodo": {
-                "type": "string",
-                "enum": ["goteo", "microaspersion", "gravedad", "aspersion"],
-                "title": "Método de Riego"
-            },
-            "duracion_min": {
-                "type": "number",
-                "minimum": 0,
-                "title": "Duración (min)"
-            },
-            "volumen_m3": {
-                "type": "number",
-                "minimum": 0,
-                "title": "Volumen (m³)",
-                "unit": "m³"
-            },
-            "presion_bar": {
-                "type": "number",
-                "minimum": 0,
-                "maximum": 10,
-                "title": "Presión (bar)",
-                "unit": "bar"
-            },
-            "ce_uScm": {
-                "type": "number",
-                "minimum": 0,
-                "title": "CE (µS/cm)",
-                "unit": "µS/cm"
-            },
-            "ph": {
-                "type": "number",
-                "minimum": 0,
-                "maximum": 14,
-                "title": "pH"
-            }
-        },
-        "required": ["metodo", "duracion_min"]
-    }'::jsonb,
-    'fas fa-tint',
-    '#007bff'
-);
-```
+**Los 10 tipos de eventos predefinidos**:
+1. Aplicación de Riego (irrigation)
+2. Fertilización (fertilization)
+3. Aplicación Fitosanitaria (phytosanitary)
+4. Labores de Cultivo (maintenance)
+5. Monitoreo (monitoring)
+6. Brotes y Plagas (other)
+7. Eventos Climáticos (other)
+8. Cosecha (harvest)
+9. Poscosecha (postharvest)
+10. Mano de Obra y Costos (other)
 
-### 4.5 Tabla: events
+### 4.5 Tabla: events (Base)
 
-Instancias de eventos (registros reales).
+Tabla base que contiene campos comunes a todos los eventos. Las tablas específicas heredan de esta.
 
 ```sql
 CREATE TABLE events (
@@ -230,7 +184,6 @@ CREATE TABLE events (
     field_id UUID NOT NULL REFERENCES fields(id) ON DELETE CASCADE,
     campaign_id INT REFERENCES campaigns(id) ON DELETE SET NULL,
     timestamp TIMESTAMPTZ NOT NULL,
-    payload JSONB NOT NULL,  -- Datos capturados según schema
     observations TEXT,
     created_by_id INT REFERENCES auth_user(id) ON DELETE SET NULL,
     created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -247,7 +200,195 @@ CREATE INDEX idx_events_event_type ON events(event_type_id);
 CREATE INDEX idx_events_campaign ON events(campaign_id);
 CREATE INDEX idx_events_timestamp ON events(timestamp DESC);
 CREATE INDEX idx_events_created_by ON events(created_by_id);
-CREATE INDEX idx_events_payload_gin ON events USING GIN(payload jsonb_path_ops);
+
+-- Trigger
+CREATE TRIGGER update_events_updated_at
+    BEFORE UPDATE ON events
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+COMMENT ON TABLE events IS 'Tabla base para todos los eventos de trazabilidad';
+```
+
+### 4.6 Tablas Específicas de Eventos
+
+Django utiliza herencia Multi-Table (cada tabla tiene su propia PK que es FK a la tabla padre).
+
+#### 4.6.1 irrigation_events (Aplicación de Riego)
+
+```sql
+CREATE TABLE irrigation_events (
+    event_ptr_id UUID PRIMARY KEY REFERENCES events(id) ON DELETE CASCADE,
+    metodo VARCHAR(50) NOT NULL,
+    duracion_minutos INT NOT NULL CHECK (duracion_minutos > 0),
+    fuente_agua VARCHAR(50) NOT NULL,
+    volumen_m3 NUMERIC(10, 2) CHECK (volumen_m3 >= 0),
+    presion_bar NUMERIC(5, 2) CHECK (presion_bar BETWEEN 0 AND 10),
+    ce_uScm NUMERIC(10, 2) CHECK (ce_uScm >= 0),
+    ph NUMERIC(4, 2) CHECK (ph BETWEEN 0 AND 14)
+);
+
+CREATE INDEX idx_irrigation_metodo ON irrigation_events(metodo);
+COMMENT ON TABLE irrigation_events IS 'Eventos de aplicación de riego';
+```
+
+#### 4.6.2 fertilization_events (Fertilización)
+
+```sql
+CREATE TABLE fertilization_events (
+    event_ptr_id UUID PRIMARY KEY REFERENCES events(id) ON DELETE CASCADE,
+    tipo_fertilizante VARCHAR(50) NOT NULL,
+    nombre_producto VARCHAR(200) NOT NULL,
+    dosis_total_kg NUMERIC(10, 2) NOT NULL CHECK (dosis_total_kg > 0),
+    metodo_aplicacion VARCHAR(50) NOT NULL,
+    area_aplicada_ha NUMERIC(10, 4) CHECK (area_aplicada_ha > 0),
+    npk_formula VARCHAR(50)
+);
+
+CREATE INDEX idx_fertilization_tipo ON fertilization_events(tipo_fertilizante);
+COMMENT ON TABLE fertilization_events IS 'Eventos de fertilización';
+```
+
+#### 4.6.3 phytosanitary_events (Aplicación Fitosanitaria)
+
+```sql
+CREATE TABLE phytosanitary_events (
+    event_ptr_id UUID PRIMARY KEY REFERENCES events(id) ON DELETE CASCADE,
+    tipo_producto VARCHAR(50) NOT NULL,
+    nombre_producto VARCHAR(200) NOT NULL,
+    ingrediente_activo VARCHAR(200),
+    dosis_total_l_kg NUMERIC(10, 2) NOT NULL CHECK (dosis_total_l_kg > 0),
+    metodo_aplicacion VARCHAR(50) NOT NULL,
+    area_tratada_ha NUMERIC(10, 4) CHECK (area_tratada_ha > 0),
+    plagas_objetivo TEXT,
+    intervalo_seguridad_dias INT CHECK (intervalo_seguridad_dias >= 0)
+);
+
+CREATE INDEX idx_phytosanitary_tipo ON phytosanitary_events(tipo_producto);
+COMMENT ON TABLE phytosanitary_events IS 'Eventos de aplicación fitosanitaria';
+```
+
+#### 4.6.4 maintenance_events (Labores de Cultivo)
+
+```sql
+CREATE TABLE maintenance_events (
+    event_ptr_id UUID PRIMARY KEY REFERENCES events(id) ON DELETE CASCADE,
+    tipo_labor VARCHAR(100) NOT NULL,
+    descripcion TEXT NOT NULL,
+    area_intervenida_ha NUMERIC(10, 4) CHECK (area_intervenida_ha > 0),
+    horas_hombre NUMERIC(10, 2) CHECK (horas_hombre >= 0),
+    maquinaria_utilizada TEXT
+);
+
+CREATE INDEX idx_maintenance_tipo ON maintenance_events(tipo_labor);
+COMMENT ON TABLE maintenance_events IS 'Eventos de labores de cultivo (poda, deshierbe, etc.)';
+```
+
+#### 4.6.5 monitoring_events (Monitoreo)
+
+```sql
+CREATE TABLE monitoring_events (
+    event_ptr_id UUID PRIMARY KEY REFERENCES events(id) ON DELETE CASCADE,
+    tipo_monitoreo VARCHAR(100) NOT NULL,
+    parametros_medidos TEXT NOT NULL,
+    resultados TEXT NOT NULL,
+    area_muestreada_ha NUMERIC(10, 4) CHECK (area_muestreada_ha > 0),
+    numero_muestras INT CHECK (numero_muestras > 0),
+    hallazgos_relevantes TEXT
+);
+
+CREATE INDEX idx_monitoring_tipo ON monitoring_events(tipo_monitoreo);
+COMMENT ON TABLE monitoring_events IS 'Eventos de monitoreo (fitosanitario, fenológico, suelo, etc.)';
+```
+
+#### 4.6.6 outbreak_events (Brotes y Plagas)
+
+```sql
+CREATE TABLE outbreak_events (
+    event_ptr_id UUID PRIMARY KEY REFERENCES events(id) ON DELETE CASCADE,
+    tipo_organismo VARCHAR(50) NOT NULL,
+    nombre_organismo VARCHAR(200) NOT NULL,
+    nivel_severidad VARCHAR(20) NOT NULL CHECK (nivel_severidad IN ('Bajo', 'Medio', 'Alto', 'Crítico')),
+    area_afectada_ha NUMERIC(10, 4) CHECK (area_afectada_ha > 0),
+    poblacion_estimada TEXT,
+    estado_fenologico VARCHAR(100),
+    acciones_tomadas TEXT
+);
+
+CREATE INDEX idx_outbreak_severidad ON outbreak_events(nivel_severidad);
+COMMENT ON TABLE outbreak_events IS 'Eventos de brotes de plagas y enfermedades';
+```
+
+#### 4.6.7 climate_events (Eventos Climáticos)
+
+```sql
+CREATE TABLE climate_events (
+    event_ptr_id UUID PRIMARY KEY REFERENCES events(id) ON DELETE CASCADE,
+    tipo_evento VARCHAR(50) NOT NULL,
+    temperatura_min_c NUMERIC(5, 2),
+    temperatura_max_c NUMERIC(5, 2),
+    precipitacion_mm NUMERIC(10, 2) CHECK (precipitacion_mm >= 0),
+    humedad_relativa_pct NUMERIC(5, 2) CHECK (humedad_relativa_pct BETWEEN 0 AND 100),
+    velocidad_viento_kmh NUMERIC(10, 2) CHECK (velocidad_viento_kmh >= 0),
+    descripcion_condiciones TEXT
+);
+
+CREATE INDEX idx_climate_tipo ON climate_events(tipo_evento);
+COMMENT ON TABLE climate_events IS 'Eventos climáticos (lluvia, helada, granizo, etc.)';
+```
+
+#### 4.6.8 harvest_events (Cosecha)
+
+```sql
+CREATE TABLE harvest_events (
+    event_ptr_id UUID PRIMARY KEY REFERENCES events(id) ON DELETE CASCADE,
+    tipo_cosecha VARCHAR(50) NOT NULL,
+    cantidad_kg NUMERIC(12, 2) NOT NULL CHECK (cantidad_kg > 0),
+    calidad VARCHAR(50) NOT NULL,
+    destino VARCHAR(100) NOT NULL,
+    cuadrillas INT CHECK (cuadrillas > 0),
+    horas_cosecha NUMERIC(10, 2) CHECK (horas_cosecha > 0)
+);
+
+CREATE INDEX idx_harvest_tipo ON harvest_events(tipo_cosecha);
+CREATE INDEX idx_harvest_calidad ON harvest_events(calidad);
+COMMENT ON TABLE harvest_events IS 'Eventos de cosecha';
+```
+
+#### 4.6.9 postharvest_events (Poscosecha)
+
+```sql
+CREATE TABLE postharvest_events (
+    event_ptr_id UUID PRIMARY KEY REFERENCES events(id) ON DELETE CASCADE,
+    tipo_proceso VARCHAR(100) NOT NULL,
+    lote_procesado VARCHAR(100),
+    cantidad_entrada_kg NUMERIC(12, 2) CHECK (cantidad_entrada_kg > 0),
+    cantidad_salida_kg NUMERIC(12, 2) CHECK (cantidad_salida_kg > 0),
+    merma_pct NUMERIC(5, 2) CHECK (merma_pct BETWEEN 0 AND 100),
+    temperatura_almacen_c NUMERIC(5, 2),
+    duracion_proceso_horas NUMERIC(10, 2) CHECK (duracion_proceso_horas > 0)
+);
+
+CREATE INDEX idx_postharvest_tipo ON postharvest_events(tipo_proceso);
+COMMENT ON TABLE postharvest_events IS 'Eventos de procesos poscosecha';
+```
+
+#### 4.6.10 labor_cost_events (Mano de Obra y Costos)
+
+```sql
+CREATE TABLE labor_cost_events (
+    event_ptr_id UUID PRIMARY KEY REFERENCES events(id) ON DELETE CASCADE,
+    tipo_labor VARCHAR(100) NOT NULL,
+    descripcion TEXT NOT NULL,
+    numero_trabajadores INT NOT NULL CHECK (numero_trabajadores > 0),
+    horas_totales NUMERIC(10, 2) NOT NULL CHECK (horas_totales > 0),
+    costo_total_mxn NUMERIC(12, 2) NOT NULL CHECK (costo_total_mxn >= 0),
+    tipo_pago VARCHAR(50) NOT NULL
+);
+
+CREATE INDEX idx_labor_tipo ON labor_cost_events(tipo_labor);
+COMMENT ON TABLE labor_cost_events IS 'Eventos de mano de obra y costos laborales';
+```
 
 -- Índices parciales (para consultas frecuentes)
 CREATE INDEX idx_events_recent ON events(timestamp DESC)
@@ -285,15 +426,15 @@ INSERT INTO events (event_type_id, field_id, campaign_id, timestamp, payload, cr
 );
 ```
 
-### 4.6 Tabla: attachments
+### 4.7 Tabla: attachments
 
-Archivos adjuntos a eventos.
+Archivos adjuntos a eventos (imágenes, PDFs, documentos, etc.).
 
 ```sql
 CREATE TABLE attachments (
     id BIGSERIAL PRIMARY KEY,
     event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
-    file_path VARCHAR(500) NOT NULL,
+    file VARCHAR(500) NOT NULL,  -- Ruta del archivo (Django FileField)
     file_name VARCHAR(255) NOT NULL,
     file_size INT CHECK (file_size > 0 AND file_size <= 10485760),  -- Max 10MB
     mime_type VARCHAR(100) NOT NULL,
@@ -305,12 +446,14 @@ CREATE TABLE attachments (
 -- Índices
 CREATE INDEX idx_attachments_event ON attachments(event_id);
 CREATE INDEX idx_attachments_uploaded_at ON attachments(uploaded_at DESC);
+CREATE INDEX idx_attachments_mime_type ON attachments(mime_type);
 
-COMMENT ON TABLE attachments IS 'Archivos adjuntos (fotos, PDFs, etc.)';
-COMMENT ON COLUMN attachments.file_path IS 'Ruta relativa en storage';
+COMMENT ON TABLE attachments IS 'Archivos adjuntos a eventos (fotos, PDFs, hojas de cálculo, etc.)';
+COMMENT ON COLUMN attachments.file IS 'Ruta del archivo gestionada por Django FileField';
+COMMENT ON COLUMN attachments.file_size IS 'Tamaño en bytes, máximo 10MB';
 ```
 
-### 4.7 Tabla: variables
+### 4.8 Tabla: variables
 
 Variables ambientales/IoT.
 
@@ -368,7 +511,7 @@ CREATE TYPE variable_type_enum AS ENUM (
 );
 ```
 
-### 4.8 Tabla: audit_logs
+### 4.9 Tabla: audit_logs
 
 Auditoría de operaciones.
 

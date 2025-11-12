@@ -312,7 +312,7 @@ def event_create_view(request):
             return redirect('event_list')
         
         if request.method == 'POST':
-            form = FormClass(request.POST)
+            form = FormClass(request.POST, request.FILES)
             if form.is_valid():
                 try:
                     with transaction.atomic():
@@ -322,7 +322,22 @@ def event_create_view(request):
                         event.full_clean()  # Ejecutar validaciones del modelo
                         event.save()
                         
-                        messages.success(request, f'Evento "{event_type.name}" registrado exitosamente.')
+                        # Procesar archivos adjuntos
+                        files = request.FILES.getlist('attachments')
+                        for file in files:
+                            Attachment.objects.create(
+                                event=event,
+                                file=file,
+                                file_name=file.name,
+                                file_size=file.size,
+                                mime_type=file.content_type,
+                                uploaded_by=request.user
+                            )
+                        
+                        if files:
+                            messages.success(request, f'Evento "{event_type.name}" registrado exitosamente con {len(files)} archivo(s) adjunto(s).')
+                        else:
+                            messages.success(request, f'Evento "{event_type.name}" registrado exitosamente.')
                         return redirect('event_list')
                 except Exception as e:
                     messages.error(request, f'Error al crear evento: {str(e)}')
@@ -368,8 +383,12 @@ def event_detail_view(request, pk):
             pk=pk
         )
     
+    # Obtener adjuntos del evento
+    attachments = Attachment.objects.filter(event_id=pk).order_by('-uploaded_at')
+    
     context = {
         'event': event,
+        'attachments': attachments,
     }
     return render(request, 'events/event_detail.html', context)
 
