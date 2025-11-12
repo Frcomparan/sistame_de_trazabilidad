@@ -8,6 +8,8 @@ from django.contrib import messages
 from django.core.paginator import Paginator
 from django.utils import timezone
 from django.db import transaction
+from datetime import datetime, timedelta
+import pytz
 from django.http import JsonResponse
 import json
 from jsonschema import validate as json_validate, ValidationError as JSONSchemaValidationError
@@ -330,12 +332,42 @@ def event_create_view(request):
                         messages.error(request, f'Error en los datos: {e.message}')
                         raise
                 
+                # Convertir timestamp a datetime con zona horaria
+                timestamp_str = request.POST.get('timestamp')
+                
+                # El input datetime-local envía formato: "2025-10-29T16:44"
+                # Parseamos como datetime naive y luego lo localizamos a la zona horaria de Django
+                try:
+                    # Intentar parsear el formato del datetime-local
+                    timestamp_naive = datetime.strptime(timestamp_str, '%Y-%m-%dT%H:%M')
+                except ValueError:
+                    # Si falla, intentar con el formato ISO completo
+                    timestamp_naive = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
+                    if not timezone.is_naive(timestamp_naive):
+                        # Si ya tiene zona horaria, convertir a la zona horaria local
+                        local_tz = pytz.timezone('America/Mexico_City')
+                        timestamp_aware = timestamp_naive.astimezone(local_tz)
+                    else:
+                        # Si es naive, localizarlo
+                        local_tz = pytz.timezone('America/Mexico_City')
+                        timestamp_aware = local_tz.localize(timestamp_naive)
+                else:
+                    # Localizar el datetime naive a la zona horaria de Django
+                    local_tz = pytz.timezone('America/Mexico_City')
+                    timestamp_aware = local_tz.localize(timestamp_naive)
+                
+                # Validar que el timestamp no esté en el futuro
+                max_timestamp = timezone.now() + timedelta(hours=1)
+                if timestamp_aware > max_timestamp:
+                    messages.error(request, f'El timestamp no puede estar más de 1 hora en el futuro.')
+                    raise ValueError('Timestamp en el futuro')
+                
                 # Crear evento
                 event = Event.objects.create(
                     event_type=event_type,
                     field=field,
                     campaign=campaign,
-                    timestamp=request.POST.get('timestamp'),
+                    timestamp=timestamp_aware,
                     payload=payload,
                     observations=request.POST.get('observations', ''),
                     created_by=request.user

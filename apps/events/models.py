@@ -96,12 +96,17 @@ class Event(models.Model):
             models.Index(fields=['-timestamp']),
             models.Index(fields=['created_by']),
         ]
-        constraints = [
-            models.CheckConstraint(
-                check=models.Q(timestamp__lte=timezone.now() + timedelta(hours=1)),
-                name='check_event_timestamp'
-            )
-        ]
+
+    def clean(self):
+        """Validación personalizada del modelo."""
+        super().clean()
+        # Validar que el timestamp no esté más de 1 hora en el futuro
+        max_timestamp = timezone.now() + timedelta(hours=1)
+        if self.timestamp and self.timestamp > max_timestamp:
+            from django.core.exceptions import ValidationError
+            raise ValidationError({
+                'timestamp': f'El timestamp no puede estar más de 1 hora en el futuro. Máximo permitido: {max_timestamp}'
+            })
 
     def __str__(self):
         return f"{self.event_type.name} - {self.field.name} @ {self.timestamp}"
