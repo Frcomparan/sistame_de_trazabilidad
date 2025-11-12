@@ -28,22 +28,22 @@ Este documento identifica, analiza y propone estrategias de mitigación para los
 
 ## 3. Riesgos Identificados
 
-### R01: Complejidad del Sistema de Eventos Dinámicos
+### R01: Validación de Formularios Complejos
 
 **Categoría**: Técnico  
-**Probabilidad**: Alta (60%)  
-**Impacto**: Alto  
+**Probabilidad**: Media (40%)  
+**Impacto**: Medio  
 **Fase Crítica**: Semanas 4-7
 
-**Descripción**: El núcleo del sistema (eventos dinámicos con JSON Schema) es complejo y no está ampliamente documentado en Django. Riesgo de:
-- Subestimar esfuerzo de implementación
-- Problemas de validación
-- Dificultad para generar formularios dinámicos
+**Descripción**: La validación de formularios basados en JSON Schema puede presentar desafíos. Riesgo de:
+- Errores en la validación de campos complejos
+- Problemas con validaciones en tiempo real
+- Dificultades para mostrar mensajes de error claros
 - Rendimiento de queries JSONB
 
 **Indicadores de Riesgo**:
-- ⚠️ Semana 5: Prototipo de validación no funciona
-- ⚠️ Semana 6: Formularios no se renderizan correctamente
+- ⚠️ Semana 5: Validación JSON Schema no funciona correctamente
+- ⚠️ Semana 6: Formularios no muestran errores de validación claros
 - ⚠️ Semana 7: Consultas JSONB lentas (>3s)
 
 **Estrategias de Mitigación**:
@@ -329,7 +329,7 @@ Si falla validación compleja:
 
 | ID | Riesgo | Prob. | Impacto | Severidad | Estado |
 |----|--------|-------|---------|-----------|--------|
-| R01 | Complejidad eventos dinámicos | Alta | Alto | **Crítico** | Activo |
+| R01 | Validación de formularios complejos | Media | Medio | **Medio** | Activo |
 | R02 | Falta validación usuarios | Media | Alto | **Alto** | Activo |
 | R03 | Rendimiento | Media | Medio | Medio | Activo |
 | R04 | Resistencia al cambio | Alta | Alto | **Crítico** | Activo |

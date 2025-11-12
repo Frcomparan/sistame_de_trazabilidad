@@ -1,6 +1,6 @@
 # Plan de Desarrollo - Cronograma de 16 Semanas
 
-[← Volver al índice](../README.md) | [← Eventos Dinámicos](./07_eventos_dinamicos.md) | [Riesgos →](./09_riesgos.md)
+[← Volver al índice](../README.md) | [← Sistema de Eventos](./07_eventos_dinamicos.md) | [Riesgos →](./09_riesgos.md)
 
 ## 1. Resumen Ejecutivo
 
@@ -19,10 +19,10 @@
 └─────────────────────────────────────────────────────────────┘
                           ↓
 ┌─────────────────────────────────────────────────────────────┐
-│ Fase 2: Núcleo - Eventos Dinámicos (Semanas 4-7)           │
+│ Fase 2: Núcleo - Sistema de Eventos (Semanas 4-7)          │
 │ - EventType + validación JSON Schema                        │
 │ - Event CRUD                                                 │
-│ - Formularios dinámicos                                      │
+│ - Formularios según esquema                                  │
 └─────────────────────────────────────────────────────────────┘
                           ↓
 ┌─────────────────────────────────────────────────────────────┐
@@ -136,9 +136,9 @@
 
 ---
 
-### **Semana 6: Formularios Dinámicos**
+### **Semana 6: Formularios según Esquema**
 
-**Objetivos**: Renderizado dinámico de formularios
+**Objetivos**: Renderizado de formularios basado en JSON Schema
 
 | Tarea | Esfuerzo | Responsable | Entregable |
 |-------|----------|-------------|------------|
@@ -146,9 +146,9 @@
 | Template event_form.html | 6h | Dev | Form renderizado |
 | JavaScript para tipos especiales | 6h | Dev | Date picker, select, etc. |
 | Previsualización de formulario | 4h | Dev | Preview en EventType |
-| Tests formularios dinámicos | 6h | Dev | Tests E2E |
+| Tests formularios según esquema | 6h | Dev | Tests E2E |
 
-**Entregables**: Formularios 100% dinámicos
+**Entregables**: Formularios renderizados desde JSON Schema
 
 ---
 
@@ -167,9 +167,9 @@
 | Documentar esquemas | 3h | Dev | Documentación schemas |
 | Validación con usuarios | 6h | Stakeholder | Feedback |
 
-**Entregables**: 9 eventos base cargados
+**Entregables**: 10 eventos predefinidos cargados
 
-**🎯 Hito 2**: Sistema de Eventos Dinámicos completo (Fin Semana 7)
+**🎯 Hito 2**: Sistema de Eventos completo (Fin Semana 7)
 
 ---
 
@@ -337,7 +337,7 @@
 | Fase | Semanas | Esfuerzo (horas) | % Total |
 |------|---------|------------------|---------|
 | Fundación | 1-3 | 120h | 19% |
-| Eventos Dinámicos | 4-7 | 160h | 25% |
+| Sistema de Eventos | 4-7 | 160h | 25% |
 | Variables y Consultas | 8-10 | 120h | 19% |
 | API y Reportes | 11-13 | 120h | 19% |
 | Pruebas y Despliegue | 14-16 | 120h | 19% |
@@ -361,7 +361,7 @@ Semana 1 ──→ Semana 2 ──→ Semana 3
                                                     Semana 14 ──→ Semana 15 ──→ Semana 16
 ```
 
-**Ruta Crítica**: Semanas 1-7 (eventos dinámicos) son críticas. Retrasos aquí afectan todo.
+**Ruta Crítica**: Semanas 1-7 (sistema de eventos) son críticas. Retrasos aquí afectan todo.
 
 ## 6. Recursos Necesarios
 
@@ -390,7 +390,7 @@ Semana 1 ──→ Semana 2 ──→ Semana 3
 
 | Riesgo | Probabilidad | Impacto | Mitigación |
 |--------|--------------|---------|------------|
-| Complejidad eventos dinámicos | Alta | Alto | Prototipar temprano (Semana 4) |
+| Validación de formularios complejos | Media | Medio | Validación estricta con JSON Schema |
 | Falta de validación usuario | Media | Alto | Revisiones cada 2 semanas |
 | Problemas de rendimiento | Media | Medio | Pruebas de carga Semana 14 |
 | Retrasos en dependencias | Baja | Alto | Buffer de 1 semana |
@@ -400,7 +400,7 @@ Semana 1 ──→ Semana 2 ──→ Semana 3
 | Hito | Semana | Entregables |
 |------|--------|-------------|
 | **Hito 1** | 3 | Proyecto base + modelos + auth |
-| **Hito 2** | 7 | Sistema eventos dinámicos funcional |
+| **Hito 2** | 7 | Sistema de eventos funcional |
 | **Hito 3** | 10 | Variables + trazabilidad + adjuntos |
 | **Hito 4** | 13 | API completa + reportes |
 | **Hito 5** | 16 | Sistema en producción |

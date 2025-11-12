@@ -74,25 +74,32 @@ Este documento detalla los requerimientos funcionales y no funcionales del Siste
 - Estado: activo/inactivo/mantenimiento
 ```
 
-### 2.2 Sistema de Eventos Dinámicos (Núcleo)
+### 2.2 Sistema de Eventos (Núcleo)
 
-#### RF-04: Definición de Tipos de Evento
+#### RF-04: Tipos de Evento Predefinidos
 
 **Prioridad**: Crítica  
-**Descripción**: Los administradores deben poder crear y configurar nuevos tipos de eventos sin modificar código.
+**Descripción**: El sistema incluye 10 tipos de eventos predefinidos que cubren las principales actividades agrícolas. Estos eventos están configurados con esquemas JSON que definen los campos requeridos y sus validaciones.
+
+**Tipos de Eventos Incluidos**:
+1. Aplicación de Riego
+2. Aplicación de Fertilizante
+3. Aplicación Fitosanitaria
+4. Labores de Cultivo
+5. Monitoreo de Plagas
+6. Brote de Plaga/Enfermedad
+7. Condiciones Climáticas
+8. Cosecha
+9. Almacenamiento Poscosecha
+10. Mano de Obra y Costos
 
 **Criterios de Aceptación**:
-- Crear tipo de evento con nombre, categoría y descripción
-- Definir esquema de campos dinámicamente:
-  - Nombre del campo
-  - Tipo de dato (texto, número, decimal, fecha, fecha-hora, selección, booleano)
-  - Obligatorio/opcional
-  - Unidad de medida (cuando aplique)
-  - Valores permitidos (para campos de selección)
-  - Validaciones (rangos, expresiones regulares)
-- Versionar el esquema (permitir evolución sin romper datos históricos)
-- Activar/desactivar tipos de evento
-- Previsualizar formulario antes de publicar
+- Los 10 tipos de eventos están predefinidos en el sistema
+- Cada tipo tiene un esquema JSON Schema que define sus campos
+- Los esquemas incluyen validaciones (tipos, rangos, valores permitidos)
+- Los tipos de eventos se cargan mediante comando de Django (`setup_event_types`)
+- Los administradores pueden desactivar tipos no utilizados
+- Los administradores pueden modificar esquemas existentes (con precaución)
 
 **Ejemplo de Esquema (JSON)**:
 ```json
@@ -101,43 +108,38 @@ Este documento detalla los requerimientos funcionales y no funcionales del Siste
   "properties": {
     "metodo": {
       "type": "string",
-      "enum": ["goteo", "microaspersión", "gravedad"],
-      "required": true
+      "enum": ["Aspersión", "Goteo", "Surco", "Pivote", "Manual"],
+      "title": "Método de Riego"
     },
-    "duracion_min": {
-      "type": "number",
-      "minimum": 0,
-      "required": true,
-      "unit": "minutos"
+    "duracion_minutos": {
+      "type": "integer",
+      "minimum": 1,
+      "title": "Duración (minutos)"
     },
     "volumen_m3": {
       "type": "number",
       "minimum": 0,
-      "required": false,
+      "title": "Volumen (m³)",
       "unit": "m³"
-    },
-    "presion_bar": {
-      "type": "number",
-      "minimum": 0,
-      "maximum": 10,
-      "required": false,
-      "unit": "bar"
     }
-  }
+  },
+  "required": ["metodo", "duracion_minutos"]
 }
 ```
+
+> **Nota MVP**: Para simplificar el sistema, no se permite la creación dinámica de nuevos tipos de eventos. Si se requiere un nuevo tipo, debe agregarse mediante código y migración.
 
 #### RF-05: Registro de Instancias de Eventos
 
 **Prioridad**: Crítica  
-**Descripción**: Capturar eventos reales que ocurren en campo según los tipos definidos.
+**Descripción**: Capturar eventos reales que ocurren en campo según los tipos predefinidos.
 
 **Criterios de Aceptación**:
 - Seleccionar lote/parcela
-- Seleccionar campaña
-- Seleccionar tipo de evento
-- Renderizar formulario dinámico según esquema del tipo
-- Validar datos contra el esquema
+- Seleccionar campaña (opcional)
+- Seleccionar tipo de evento de la lista de 10 predefinidos
+- Renderizar formulario según esquema del tipo seleccionado
+- Validar datos contra el esquema JSON
 - Registrar fecha/hora del evento
 - Registrar usuario responsable
 - Permitir observaciones adicionales (campo libre)
@@ -447,9 +449,9 @@ Este documento detalla los requerimientos funcionales y no funcionales del Siste
 | RF-01 | Alta | Catálogos | 1 |
 | RF-02 | Alta | Catálogos | 1 |
 | RF-03 | Media | Catálogos | 2 |
-| RF-04 | Crítica | Eventos Dinámicos | 2-3 |
-| RF-05 | Crítica | Eventos Dinámicos | 3-4 |
-| RF-06 | Media | Eventos Dinámicos | 5 |
+| RF-04 | Crítica | Eventos | 2 |
+| RF-05 | Crítica | Eventos | 3 |
+| RF-06 | Media | Eventos | 4 |
 | RF-07 | Alta | Variables | 4 |
 | RF-08 | Media | Variables | 6 |
 | RF-09 | Crítica | Consultas | 5 |
@@ -489,20 +491,15 @@ Este documento detalla los requerimientos funcionales y no funcionales del Siste
 6. Usuario expande evento para ver detalles
 7. Usuario exporta a Excel
 
-### CU-03: Crear Tipo de Evento Personalizado
+### CU-03: Consultar Tipos de Eventos Disponibles
 
-**Actor**: Administrador  
+**Actor**: Técnico de Campo  
 **Flujo Principal**:
-1. Administrador accede a "Gestión de Tipos de Evento"
-2. Crea nuevo tipo "Análisis de Suelo"
-3. Define campos:
-   - pH (número, requerido, rango 4-9)
-   - Materia Orgánica (número, %, requerido)
-   - Nitrógeno (número, ppm, opcional)
-   - Laboratorio (texto, requerido)
-4. Previsualiza formulario
-5. Activa el tipo
-6. Técnicos ahora pueden registrar este nuevo evento
+1. Usuario accede al formulario de creación de evento
+2. Sistema muestra lista de 10 tipos de eventos predefinidos
+3. Usuario selecciona un tipo (ej: "Aplicación de Riego")
+4. Sistema muestra descripción del tipo seleccionado
+5. Usuario puede ver qué campos se requerirán antes de continuar
 
 ---
 

@@ -11,7 +11,7 @@ Este documento especifica el esquema físico de la base de datos PostgreSQL, inc
 **PostgreSQL 15+**
 
 **Razones de Selección**:
-- ✅ Soporte nativo de **JSONB** (crítico para eventos dinámicos)
+- ✅ Soporte nativo de **JSONB** (para almacenar payloads de eventos)
 - ✅ **Índices GIN** para consultas eficientes en JSONB
 - ✅ **Transacciones ACID** completas
 - ✅ **Maduro y estable**
@@ -127,7 +127,7 @@ COMMENT ON TABLE stations IS 'Estaciones de monitoreo de variables ambientales';
 
 ### 4.4 Tabla: event_types
 
-Definición de tipos de evento (esquemas dinámicos).
+Definición de tipos de evento predefinidos (10 tipos con esquemas JSON).
 
 ```sql
 CREATE TABLE event_types (
@@ -162,7 +162,7 @@ CREATE TRIGGER update_event_types_updated_at
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
-COMMENT ON TABLE event_types IS 'Definiciones de tipos de eventos con esquemas dinámicos';
+COMMENT ON TABLE event_types IS 'Definiciones de tipos de eventos predefinidos (10 tipos fijos)';
 COMMENT ON COLUMN event_types.schema IS 'JSON Schema (draft-07) para validación del payload';
 ```
 

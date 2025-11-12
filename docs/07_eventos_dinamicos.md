@@ -1,10 +1,12 @@
-# Sistema de Eventos Dinámicos
+# Sistema de Eventos
 
 [← Volver al índice](../README.md) | [← API REST](./06_api_rest.md) | [Cronograma →](./08_cronograma.md)
 
 ## 1. Introducción
 
-El **Sistema de Eventos Dinámicos** es el núcleo del sistema de trazabilidad. Permite crear y configurar nuevos tipos de eventos sin modificar código, proporcionando flexibilidad máxima para adaptar el sistema a nuevas necesidades.
+El **Sistema de Eventos** es el núcleo del sistema de trazabilidad. El sistema incluye 10 tipos de eventos predefinidos que cubren las principales actividades agrícolas. Estos eventos están configurados con esquemas JSON que definen los campos requeridos y sus validaciones.
+
+> **Nota MVP**: Para simplificar el sistema y reducir la complejidad, los tipos de eventos son **fijos y predefinidos**. No se permite la creación dinámica de nuevos tipos de eventos por parte de los administradores. Si se requiere un nuevo tipo de evento, debe ser agregado mediante código y migración.
 
 ## 2. Concepto y Arquitectura
 
@@ -16,6 +18,7 @@ El **Sistema de Eventos Dinámicos** es el núcleo del sistema de trazabilidad. 
 │  - Define QUÉ campos tiene el evento         │
 │  - Schema de validación (JSON Schema)        │
 │  - Metadata (nombre, categoría, icono)       │
+│  - PREDEFINIDO (10 tipos fijos)              │
 └──────────────────┬───────────────────────────┘
                    │ 1:N
                    ↓
@@ -31,14 +34,14 @@ El **Sistema de Eventos Dinámicos** es el núcleo del sistema de trazabilidad. 
 
 ```
 ┌─────────────┐
-│ ADMIN crea  │
-│ EventType   │──┐
-└─────────────┘  │
-                 │ Define schema
+│ Sistema     │
+│ inicializa  │──┐
+│ 10 eventos  │  │ Eventos predefinidos
+└─────────────┘  │ cargados al inicio
                  ↓
 ┌──────────────────────────────────┐
-│ Sistema genera formulario        │
-│ dinámicamente desde schema       │
+│ Sistema muestra formulario        │
+│ según tipo de evento seleccionado │
 └──────────────┬───────────────────┘
                │
                │ Técnico captura
@@ -55,9 +58,26 @@ El **Sistema de Eventos Dinámicos** es el núcleo del sistema de trazabilidad. 
 └──────────────────────────────────┘
 ```
 
-## 3. Componentes Principales
+## 3. Tipos de Eventos Predefinidos
 
-### 3.1 EventType (Modelo)
+El sistema incluye los siguientes 10 tipos de eventos:
+
+1. **Aplicación de Riego** - Registro de aplicaciones de riego con diferentes métodos
+2. **Aplicación de Fertilizante** - Fertilización al suelo o foliar
+3. **Aplicación Fitosanitaria** - Aplicación de fungicidas, insecticidas, herbicidas
+4. **Labores de Cultivo** - Actividades de mantenimiento (poda, deshierbe, etc.)
+5. **Monitoreo de Plagas** - Inspección y monitoreo preventivo
+6. **Brote de Plaga/Enfermedad** - Registro de brotes severos
+7. **Condiciones Climáticas** - Registro de variables meteorológicas
+8. **Cosecha** - Actividades de recolección y clasificación
+9. **Almacenamiento Poscosecha** - Control de almacenamiento del producto
+10. **Mano de Obra y Costos** - Registro de recursos humanos y costos
+
+Estos eventos se crean automáticamente al ejecutar el comando `setup_event_types` (ver [documentación del comando](./comando_setup_event_types.md)).
+
+## 4. Componentes Principales
+
+### 4.1 EventType (Modelo)
 
 ```python
 # events/models.py
@@ -83,7 +103,6 @@ class EventType(models.Model):
     category = models.CharField(max_length=50, choices=CATEGORIES)
     description = models.TextField(blank=True)
     schema = models.JSONField()  # JSON Schema
-    version = models.IntegerField(default=1)
     is_active = models.BooleanField(default=True)
     icon = models.CharField(max_length=50, blank=True)
     color = models.CharField(max_length=7, blank=True)
@@ -107,18 +126,20 @@ class EventType(models.Model):
             raise ValidationError(f'Payload inválido: {e.message}')
     
     def __str__(self):
-        return f"{self.name} (v{self.version})"
+        return self.name
 ```
 
-### 3.2 Event (Modelo)
+> **Nota**: Se eliminó el campo `version` ya que los eventos son fijos y no requieren versionado dinámico.
+
+### 4.2 Event (Modelo)
 
 ```python
 # events/models.py
 class Event(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     event_type = models.ForeignKey(EventType, on_delete=models.PROTECT)
-    field = models.ForeignKey('fields.Field', on_delete=models.CASCADE)
-    campaign = models.ForeignKey('fields.Campaign', on_delete=models.SET_NULL, null=True)
+    field = models.ForeignKey('catalogs.Field', on_delete=models.CASCADE)
+    campaign = models.ForeignKey('catalogs.Campaign', on_delete=models.SET_NULL, null=True)
     timestamp = models.DateTimeField()
     payload = models.JSONField()  # Datos según schema
     observations = models.TextField(blank=True)
@@ -138,7 +159,6 @@ class Event(models.Model):
     
     def get_summary(self):
         """Genera resumen legible del evento"""
-        # Lógica para generar resumen basado en payload
         return f"{self.event_type.name} - {self.field.name}"
     
     class Meta:
@@ -150,7 +170,7 @@ class Event(models.Model):
         ]
 ```
 
-### 3.3 Schema Validator (Servicio)
+### 4.3 Schema Validator (Servicio)
 
 ```python
 # events/validators/schema_validator.py
@@ -190,82 +210,7 @@ class SchemaValidator:
         return errors
 ```
 
-### 3.4 Form Renderer (Generador de Formularios)
-
-```python
-# events/services/form_renderer.py
-from django import forms
-
-class DynamicFormRenderer:
-    """Genera formularios Django desde JSON Schema"""
-    
-    @staticmethod
-    def render_form(schema: Dict[str, Any]) -> forms.Form:
-        """Genera clase de formulario dinámicamente"""
-        properties = schema.get('properties', {})
-        required = schema.get('required', [])
-        
-        form_fields = {}
-        
-        for field_name, field_schema in properties.items():
-            field_type = field_schema.get('type')
-            field_title = field_schema.get('title', field_name)
-            is_required = field_name in required
-            
-            # Crear campo según tipo
-            if field_type == 'string':
-                if 'enum' in field_schema:
-                    choices = [(v, v) for v in field_schema['enum']]
-                    form_fields[field_name] = forms.ChoiceField(
-                        label=field_title,
-                        choices=choices,
-                        required=is_required
-                    )
-                else:
-                    form_fields[field_name] = forms.CharField(
-                        label=field_title,
-                        required=is_required,
-                        max_length=field_schema.get('maxLength', 255)
-                    )
-            
-            elif field_type == 'number':
-                form_fields[field_name] = forms.DecimalField(
-                    label=field_title,
-                    required=is_required,
-                    min_value=field_schema.get('minimum'),
-                    max_value=field_schema.get('maximum')
-                )
-            
-            elif field_type == 'integer':
-                form_fields[field_name] = forms.IntegerField(
-                    label=field_title,
-                    required=is_required,
-                    min_value=field_schema.get('minimum'),
-                    max_value=field_schema.get('maximum')
-                )
-            
-            elif field_type == 'boolean':
-                form_fields[field_name] = forms.BooleanField(
-                    label=field_title,
-                    required=is_required
-                )
-            
-            # Agregar help_text si existe description
-            if 'description' in field_schema:
-                form_fields[field_name].help_text = field_schema['description']
-            
-            # Agregar widget attrs para unidades
-            if 'unit' in field_schema:
-                if 'widget' not in dir(form_fields[field_name]):
-                    form_fields[field_name].widget = forms.TextInput()
-                form_fields[field_name].widget.attrs['data-unit'] = field_schema['unit']
-        
-        # Crear clase de formulario dinámicamente
-        DynamicForm = type('DynamicForm', (forms.Form,), form_fields)
-        return DynamicForm
-```
-
-### 3.5 Event Service (Lógica de Negocio)
+### 4.4 Event Service (Lógica de Negocio)
 
 ```python
 # events/services/event_service.py
@@ -329,26 +274,27 @@ class EventService:
         return queryset.select_related('event_type', 'field', 'campaign', 'created_by')
 ```
 
-## 4. Esquemas Base Predefinidos
+## 5. Esquemas de Eventos Predefinidos
 
-### 4.1 Riego
+Cada uno de los 10 eventos tiene un esquema JSON Schema que define sus campos. A continuación se muestran ejemplos de algunos esquemas:
+
+### 5.1 Aplicación de Riego
 
 ```json
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
-  "title": "Riego",
+  "title": "Datos de Aplicación de Riego",
   "properties": {
     "metodo": {
       "type": "string",
-      "enum": ["goteo", "microaspersion", "gravedad", "aspersion"],
+      "enum": ["Aspersión", "Goteo", "Surco", "Pivote", "Manual"],
       "title": "Método de Riego"
     },
-    "duracion_min": {
-      "type": "number",
-      "minimum": 0,
-      "maximum": 1440,
-      "title": "Duración (min)"
+    "duracion_minutos": {
+      "type": "integer",
+      "minimum": 1,
+      "title": "Duración (minutos)"
     },
     "volumen_m3": {
       "type": "number",
@@ -376,17 +322,17 @@ class EventService:
       "title": "pH"
     }
   },
-  "required": ["metodo", "duracion_min"]
+  "required": ["metodo", "duracion_minutos"]
 }
 ```
 
-### 4.2 Fertilización
+### 5.2 Aplicación de Fertilizante
 
 ```json
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
-  "title": "Fertilización",
+  "title": "Datos de Aplicación de Fertilizante",
   "properties": {
     "tipo": {
       "type": "string",
@@ -429,13 +375,13 @@ class EventService:
 }
 ```
 
-### 4.3 Cosecha
+### 5.3 Cosecha
 
 ```json
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
-  "title": "Cosecha",
+  "title": "Datos de Cosecha",
   "properties": {
     "fecha_inicio": {
       "type": "string",
@@ -474,169 +420,87 @@ class EventService:
 }
 ```
 
-## 5. Interfaz de Administración
+Para ver todos los esquemas completos, consulta el código fuente del comando `setup_event_types` o ejecuta el comando y revisa los tipos creados en la base de datos.
 
-### 5.1 Vista de Creación de EventType
+## 6. Inicialización del Sistema
 
-Template Django para crear tipos de evento:
+### 6.1 Carga de Eventos Predefinidos
 
-```html
-<!-- events/templates/event_type_form.html -->
-<form method="post" id="event-type-form">
-  {% csrf_token %}
-  
-  <div class="form-group">
-    <label>Nombre del Evento</label>
-    <input type="text" name="name" class="form-control" required>
-  </div>
-  
-  <div class="form-group">
-    <label>Categoría</label>
-    <select name="category" class="form-control">
-      <option value="riego">Riego</option>
-      <option value="fertilizacion">Fertilización</option>
-      <option value="otro">Otro</option>
-    </select>
-  </div>
-  
-  <div class="form-group">
-    <label>Descripción</label>
-    <textarea name="description" class="form-control"></textarea>
-  </div>
-  
-  <hr>
-  <h4>Definir Campos</h4>
-  
-  <div id="fields-container">
-    <!-- Campos dinámicos -->
-  </div>
-  
-  <button type="button" class="btn btn-secondary" onclick="addField()">
-    + Agregar Campo
-  </button>
-  
-  <hr>
-  <h4>Previsualización</h4>
-  <div id="preview"></div>
-  
-  <button type="submit" class="btn btn-primary">Guardar Tipo de Evento</button>
-</form>
+Los 10 tipos de eventos se cargan al sistema mediante el comando de Django:
 
-<script>
-function addField() {
-  const container = document.getElementById('fields-container');
-  const fieldHtml = `
-    <div class="field-definition card mb-2 p-3">
-      <div class="row">
-        <div class="col-md-3">
-          <label>Nombre del Campo</label>
-          <input type="text" class="form-control field-name" required>
-        </div>
-        <div class="col-md-2">
-          <label>Tipo</label>
-          <select class="form-control field-type">
-            <option value="string">Texto</option>
-            <option value="number">Número</option>
-            <option value="integer">Entero</option>
-            <option value="boolean">Sí/No</option>
-            <option value="date">Fecha</option>
-          </select>
-        </div>
-        <div class="col-md-2">
-          <label>Requerido</label>
-          <input type="checkbox" class="field-required">
-        </div>
-        <div class="col-md-2">
-          <label>Unidad</label>
-          <input type="text" class="form-control field-unit" placeholder="kg, m³, etc.">
-        </div>
-        <div class="col-md-3">
-          <label>&nbsp;</label><br>
-          <button type="button" class="btn btn-danger btn-sm" onclick="this.closest('.field-definition').remove()">
-            Eliminar
-          </button>
-        </div>
-      </div>
-    </div>
-  `;
-  container.insertAdjacentHTML('beforeend', fieldHtml);
-}
-
-// Generar schema JSON y enviarlo
-document.getElementById('event-type-form').addEventListener('submit', function(e) {
-  e.preventDefault();
-  
-  const schema = {
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "type": "object",
-    "properties": {},
-    "required": []
-  };
-  
-  document.querySelectorAll('.field-definition').forEach(field => {
-    const name = field.querySelector('.field-name').value;
-    const type = field.querySelector('.field-type').value;
-    const required = field.querySelector('.field-required').checked;
-    const unit = field.querySelector('.field-unit').value;
-    
-    schema.properties[name] = {
-      type: type,
-      title: name
-    };
-    
-    if (unit) {
-      schema.properties[name].unit = unit;
-    }
-    
-    if (required) {
-      schema.required.push(name);
-    }
-  });
-  
-  // Agregar schema al formulario
-  const schemaInput = document.createElement('input');
-  schemaInput.type = 'hidden';
-  schemaInput.name = 'schema';
-  schemaInput.value = JSON.stringify(schema);
-  this.appendChild(schemaInput);
-  
-  this.submit();
-});
-</script>
+```bash
+python manage.py setup_event_types
 ```
 
-## 6. Versionado de Esquemas
+Este comando:
+- Crea los 10 tipos de eventos si no existen
+- Define sus esquemas JSON Schema
+- Configura iconos, colores y categorías
+- Establece los campos requeridos y validaciones
 
-Cuando un administrador modifica un `EventType` activo:
+Para más detalles, consulta la [documentación del comando](./comando_setup_event_types.md).
 
-1. Se crea un **nuevo registro** con `version` incrementado
-2. Los eventos antiguos mantienen referencia a la versión anterior
-3. Nuevos eventos usan la nueva versión
-4. La aplicación puede leer ambas versiones
+### 6.2 Modificación de Eventos Existentes
 
-```python
-def update_event_type_schema(event_type_id, new_schema):
-    """Crea nueva versión del EventType"""
-    old_type = EventType.objects.get(id=event_type_id)
-    
-    # Desactivar versión antigua
-    old_type.is_active = False
-    old_type.save()
-    
-    # Crear nueva versión
-    new_type = EventType.objects.create(
-        name=old_type.name,
-        category=old_type.category,
-        description=old_type.description,
-        schema=new_schema,
-        version=old_type.version + 1,
-        is_active=True,
-        icon=old_type.icon,
-        color=old_type.color
-    )
-    
-    return new_type
-```
+Aunque los eventos son predefinidos, los administradores pueden:
+
+- **Modificar esquemas**: Ajustar campos, validaciones o requerimientos mediante el admin de Django
+- **Desactivar eventos**: Marcar como inactivos si no se utilizan
+- **Cambiar metadata**: Modificar iconos, colores o descripciones
+
+> **Importante**: Las modificaciones a esquemas deben hacerse con cuidado, ya que pueden afectar eventos ya registrados. Se recomienda hacer cambios solo durante el desarrollo o con migración de datos.
+
+## 7. Interfaz de Usuario
+
+### 7.1 Formulario de Creación de Evento
+
+El formulario de creación de eventos se genera dinámicamente basándose en el esquema del tipo de evento seleccionado:
+
+1. El usuario selecciona un tipo de evento de la lista de 10 predefinidos
+2. El sistema carga el esquema JSON del tipo seleccionado
+3. Se renderizan los campos del formulario según el esquema
+4. Se aplican validaciones en tiempo real
+5. Al guardar, se valida el payload completo contra el schema
+
+### 7.2 Validación en Formularios
+
+La validación se realiza en dos niveles:
+
+1. **Frontend**: Validación básica de tipos y campos requeridos
+2. **Backend**: Validación completa contra JSON Schema antes de guardar
+
+Esto garantiza la integridad de los datos y previene errores de captura.
+
+## 8. Ventajas del Enfoque de Eventos Fijos
+
+### 8.1 Simplicidad
+
+- **Menor complejidad**: No requiere interfaz de creación de tipos de eventos
+- **Validación más simple**: Los esquemas son conocidos y probados
+- **Menos errores**: No hay riesgo de crear esquemas inválidos
+
+### 8.2 Mantenibilidad
+
+- **Código más claro**: Los tipos de eventos están definidos en código
+- **Mejor testing**: Es más fácil probar tipos conocidos
+- **Versionado controlado**: Los cambios pasan por revisión de código
+
+### 8.3 Rendimiento
+
+- **Menos consultas**: No necesita cargar definiciones dinámicas
+- **Caché más efectivo**: Los esquemas son estáticos
+- **Validación más rápida**: No requiere procesamiento dinámico
+
+## 9. Extensión Futura
+
+Si en el futuro se requiere agregar nuevos tipos de eventos:
+
+1. **Modificar el comando**: Agregar el nuevo tipo en `setup_event_types.py`
+2. **Crear migración**: Si es necesario modificar el modelo
+3. **Actualizar documentación**: Documentar el nuevo tipo de evento
+4. **Ejecutar comando**: Cargar el nuevo tipo en la base de datos
+
+Este proceso garantiza que los nuevos tipos sigan el mismo estándar de calidad y validación que los predefinidos.
 
 ---
 

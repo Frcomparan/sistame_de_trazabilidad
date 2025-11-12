@@ -66,8 +66,8 @@ Registro de una actividad o acción realizada en el cultivo (riego, fertilizaci�
 **EventType (Tipo de Evento)**  
 Definición de una categoría de evento con su esquema de campos. Ejemplo: "Riego" con campos método, duración, volumen.
 
-**Evento Dinámico**  
-Capacidad del sistema de crear nuevos tipos de eventos y sus campos sin modificar código fuente, usando JSON Schema.
+**Evento Predefinido**  
+Tipo de evento que está configurado de antemano en el sistema. El sistema incluye 10 tipos de eventos predefinidos que cubren las principales actividades agrícolas. Cada tipo tiene un esquema JSON Schema que define sus campos y validaciones.
 
 ## F
 

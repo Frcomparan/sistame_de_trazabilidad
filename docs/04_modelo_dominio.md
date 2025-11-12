@@ -4,7 +4,7 @@
 
 ## 1. Introducción
 
-Este documento describe las entidades del dominio, sus atributos, relaciones y comportamientos. El modelo está diseñado para soportar el sistema de eventos dinámicos manteniendo la integridad referencial.
+Este documento describe las entidades del dominio, sus atributos, relaciones y comportamientos. El modelo está diseñado para soportar el sistema de eventos con tipos predefinidos, manteniendo la integridad referencial.
 
 ## 2. Diagrama de Clases (PlantUML)
 
@@ -58,14 +58,13 @@ ENTITY Station {
   + get_latest_readings(): List[Variable]
 }
 
-' === Sistema de Eventos Dinámicos ===
+' === Sistema de Eventos ===
 ENTITY EventType {
   + id: Integer
   + name: String {unique}
   + category: String
   + description: Text
   + schema: JSON
-  + version: Integer
   + is_active: Boolean
   + icon: String
   + color: String
@@ -73,8 +72,6 @@ ENTITY EventType {
   + updated_at: DateTime
   --
   + validate_payload(payload: JSON): Boolean
-  + render_form(): HTML
-  + get_latest_version(): EventType
 }
 
 ENTITY Event {
@@ -260,7 +257,7 @@ User "*" -- "1" Role : has
 
 ### 3.4 EventType (Tipo de Evento)
 
-**Descripción**: Define la estructura y validación de un tipo de evento.
+**Descripción**: Define la estructura y validación de un tipo de evento. Los tipos de eventos son predefinidos (10 tipos fijos) y se cargan mediante el comando `setup_event_types`.
 
 **Atributos**:
 | Atributo | Tipo | Descripción | Validación |
@@ -270,7 +267,6 @@ User "*" -- "1" Role : has
 | category | String(50) | Categoría | riego/fertilización/etc. |
 | description | Text | Descripción | Opcional |
 | schema | JSON | JSON Schema | Requerido, válido |
-| version | Integer | Versión del esquema | Default 1 |
 | is_active | Boolean | Activo | Default True |
 | icon | String(50) | Icono (CSS class) | Opcional |
 | color | String(7) | Color hex | Ej: #28a745 |
@@ -327,14 +323,13 @@ User "*" -- "1" Role : has
 
 **Métodos de Negocio**:
 - `validate_payload(payload)`: Valida datos contra el schema
-- `render_form()`: Genera formulario HTML dinámico
-- `get_latest_version()`: Obtiene la versión más reciente
 
 **Reglas de Negocio**:
 - El schema debe ser un JSON Schema válido versión 7
-- Al versionar, se crea un nuevo registro (no se modifica el existente)
-- Los eventos antiguos mantienen referencia a su versión de esquema
-- El nombre debe ser único dentro de la categoría
+- Los tipos de eventos son predefinidos (10 tipos fijos)
+- El nombre debe ser único
+- Los administradores pueden modificar esquemas existentes (con precaución)
+- Los administradores pueden desactivar tipos no utilizados
 
 ### 3.5 Event (Instancia de Evento)
 

@@ -362,7 +362,7 @@ safety check
 | 2 | Consultar trazabilidad de 1 lote (100 eventos) | < 2 segundos |
 | 3 | Consultar trazabilidad de 1 lote (1000 eventos) | < 3 segundos |
 
-### CP-005: Formulario Dinámico desde Schema
+### CP-005: Formulario desde Schema JSON
 
 **Prioridad**: Crítica  
 **Tipo**: E2E

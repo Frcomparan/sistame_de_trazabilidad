@@ -14,7 +14,7 @@ El sistema adopta una **arquitectura en capas** con separación clara de respons
 - **Capa de Acceso a Datos**: Django ORM + PostgreSQL
 - **Capa de Persistencia**: PostgreSQL con JSONB
 
-> **Nota MVP**: El sistema está diseñado para minimizar complejidad y maximizar velocidad de implementación. La única lógica compleja mantenida es el sistema de eventos dinámicos, que es fundamental para la flexibilidad del sistema.
+> **Nota MVP**: El sistema está diseñado para minimizar complejidad y maximizar velocidad de implementación. Los tipos de eventos son fijos y predefinidos (10 tipos), lo que simplifica significativamente la implementación y reduce errores de validación.
 
 ### 1.2 Diagrama de Arquitectura de Alto Nivel
 
@@ -43,7 +43,7 @@ El sistema adopta una **arquitectura en capas** con separación clara de respons
 │                                                               │
 │  ┌───────────┐  ┌──────────────┐  ┌─────────────┐          │
 │  │  Servicios│  │  Validadores │  │  Eventos    │          │
-│  │  Negocio  │  │  Dinámicos   │  │  Dinámicos  │          │
+│  │  Negocio  │  │  JSON Schema │  │  (Fijos)    │          │
 │  └───────────┘  └──────────────┘  └─────────────┘          │
 │                                                               │
 │  ┌───────────┐  ┌──────────────┐  ┌─────────────┐          │
@@ -125,14 +125,14 @@ fields/
 │   ├── campaign_service.py
 ```
 
-### 2.3 Módulo Events (Sistema de Eventos Dinámicos)
+### 2.3 Módulo Events (Sistema de Eventos)
 
 **Responsabilidades**:
-- Definición de tipos de evento (EventType)
+- Gestión de tipos de evento predefinidos (10 tipos fijos)
 - Validación de esquemas JSON
 - CRUD de eventos (Event)
 - Gestión de adjuntos
-- Motor de renderizado dinámico de formularios
+- Renderizado de formularios según esquema
 
 **Componentes**:
 ```
@@ -144,14 +144,13 @@ events/
 │   ├── schema_validator.py    # Validación JSON Schema
 │   ├── event_validator.py
 ├── services/
-│   ├── event_type_service.py
 │   ├── event_service.py
 │   ├── attachment_service.py
-├── schema/
-│   ├── base_schemas.py        # Esquemas predefinidos
-│   ├── schema_builder.py      # Constructor de esquemas
+├── management/
+│   └── commands/
+│       └── setup_event_types.py  # Comando para cargar 10 eventos
 ├── templates/
-│   ├── event_form.html        # Formulario dinámico
+│   ├── event_form.html        # Formulario según esquema
 ```
 
 ### 2.4 Módulo Variables
@@ -249,7 +248,7 @@ ui/
 
 ## 3. Decisiones Arquitectónicas Clave
 
-### 3.1 Sistema de Eventos Dinámicos con JSONB
+### 3.1 Sistema de Eventos con JSONB
 
 **Decisión**: Usar campo JSONB de PostgreSQL para almacenar payloads de eventos.
 
@@ -260,11 +259,12 @@ ui/
 4. **JSONB en PostgreSQL**: ✅ Seleccionado
 
 **Justificación**:
-- ✅ Flexibilidad total para definir campos dinámicamente
+- ✅ Flexibilidad para diferentes campos por tipo de evento
 - ✅ Validación mediante JSON Schema
 - ✅ Consultas eficientes con índices GIN
 - ✅ No requiere migraciones por cambios en esquemas
 - ✅ Balance entre estructura y flexibilidad
+- ✅ Tipos de eventos predefinidos reducen complejidad
 - ⚠️ Desventaja: Tipado débil, requiere validación estricta
 
 **Implementación**:
@@ -419,22 +419,27 @@ class StringValidator(FieldValidator):
     # ...
 ```
 
-### 4.4 Factory Pattern (Esquemas Predefinidos)
+### 4.4 Comando de Inicialización (Eventos Predefinidos)
 
-Factory para crear esquemas base de eventos.
+Comando Django para cargar los 10 tipos de eventos predefinidos.
 
 ```python
-class EventSchemaFactory:
-    @staticmethod
-    def create_riego_schema():
-        return {
-            "type": "object",
-            "properties": {...}
-        }
-    
-    @staticmethod
-    def create_fertilizacion_schema():
-        # ...
+# events/management/commands/setup_event_types.py
+class Command(BaseCommand):
+    def handle(self, *args, **options):
+        event_types = [
+            {
+                'name': 'Aplicación de Riego',
+                'category': 'riego',
+                'schema': {...}
+            },
+            # ... otros 9 tipos
+        ]
+        for event_data in event_types:
+            EventType.objects.get_or_create(
+                name=event_data['name'],
+                defaults=event_data
+            )
 ```
 
 ### 4.5 Decorator Pattern (Auditoría)

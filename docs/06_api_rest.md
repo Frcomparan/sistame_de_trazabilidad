@@ -1,6 +1,6 @@
 # Especificación de API REST
 
-[← Volver al índice](../README.md) | [← Base de Datos](./05_base_datos.md) | [Eventos Dinámicos →](./07_eventos_dinamicos.md)
+[← Volver al índice](../README.md) | [← Base de Datos](./05_base_datos.md) | [Sistema de Eventos →](./07_eventos_dinamicos.md)
 
 ## 1. Introducción
 
@@ -291,8 +291,10 @@ Detalle.
 
 ### 3.5 Tipos de Evento (Event Types)
 
+> **Nota**: Los tipos de eventos son predefinidos (10 tipos fijos). Solo se permite lectura y modificación de metadata (icono, color, descripción). No se pueden crear nuevos tipos mediante la API.
+
 #### GET /event-types/
-Listar tipos de evento disponibles.
+Listar tipos de evento disponibles (10 tipos predefinidos).
 
 **Query Params**:
 - `category`: Filtrar por categoría
@@ -301,79 +303,41 @@ Listar tipos de evento disponibles.
 **Response**:
 ```json
 {
-  "count": 12,
+  "count": 10,
   "results": [
     {
       "id": 1,
-      "name": "Riego",
+      "name": "Aplicación de Riego",
       "category": "riego",
-      "description": "Evento de aplicación de riego",
-      "version": 1,
+      "description": "Registro de aplicaciones de riego con diferentes métodos",
       "is_active": true,
-      "icon": "fas fa-tint",
+      "icon": "droplet",
       "color": "#007bff",
       "schema": {
         "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "properties": {...},
-        "required": ["metodo", "duracion_min"]
+        "required": ["metodo", "duracion_minutos"]
       }
     }
   ]
 }
 ```
 
-#### POST /event-types/
-Crear nuevo tipo de evento (solo ADMIN).
-
-**Request**:
-```json
-{
-  "name": "Análisis de Suelo",
-  "category": "otro",
-  "description": "Análisis químico del suelo",
-  "icon": "fas fa-flask",
-  "color": "#6c757d",
-  "schema": {
-    "type": "object",
-    "properties": {
-      "laboratorio": {
-        "type": "string",
-        "title": "Laboratorio"
-      },
-      "ph": {
-        "type": "number",
-        "minimum": 4,
-        "maximum": 9,
-        "title": "pH"
-      },
-      "materia_organica": {
-        "type": "number",
-        "minimum": 0,
-        "maximum": 100,
-        "title": "Materia Orgánica (%)",
-        "unit": "%"
-      },
-      "nitrogeno_ppm": {
-        "type": "number",
-        "minimum": 0,
-        "title": "Nitrógeno (ppm)",
-        "unit": "ppm"
-      }
-    },
-    "required": ["laboratorio", "ph"]
-  }
-}
-```
-
 #### GET /event-types/{id}/
-Detalle del tipo.
+Detalle del tipo de evento.
 
-#### PUT/PATCH /event-types/{id}/
-Actualizar (crea nueva versión si es_active=true).
+#### PATCH /event-types/{id}/
+Actualizar metadata del tipo (solo ADMIN):
+- `description`: Descripción
+- `icon`: Icono
+- `color`: Color
+- `is_active`: Activar/desactivar
+
+> **Importante**: No se puede modificar el `schema` mediante la API. Para modificar esquemas, se debe usar el comando `setup_event_types --update` o el admin de Django.
 
 #### DELETE /event-types/{id}/
-Desactivar (no eliminar físicamente).
+No permitido. Solo se puede desactivar usando PATCH con `is_active=false`.
 
 ### 3.6 Eventos (Events)
 
@@ -754,6 +718,6 @@ http://localhost:8000/api/schema/
 
 ---
 
-**Siguiente**: [Sistema de Eventos Dinámicos →](./07_eventos_dinamicos.md)
+**Siguiente**: [Sistema de Eventos →](./07_eventos_dinamicos.md)
 
 [← Volver al índice](../README.md)

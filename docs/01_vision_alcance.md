@@ -8,7 +8,7 @@
 
 Este documento establece la visión, objetivos y alcance del Sistema de Trazabilidad Agrícola para cultivo de limón. Define qué problemas resuelve el sistema, quiénes serán sus usuarios y qué beneficios aportará a la organización.
 
-> **Nota importante**: Este sistema está diseñado como un **MVP (Minimum Viable Product)**, buscando ser lo más simple posible, minimizando la lógica y complejidad, priorizando la implementación rápida y sencilla. La única lógica compleja que se mantiene es la de creación dinámica de eventos, que es fundamental para la flexibilidad del sistema.
+> **Nota importante**: Este sistema está diseñado como un **MVP (Minimum Viable Product)**, buscando ser lo más simple posible, minimizando la lógica y complejidad, priorizando la implementación rápida y sencilla. Los tipos de eventos son fijos y predefinidos (10 tipos), lo que simplifica significativamente la implementación y reduce errores de validación.
 
 ### 1.2 Audiencia
 
@@ -20,14 +20,14 @@ Este documento establece la visión, objetivos y alcance del Sistema de Trazabil
 ## 2. Visión del Producto
 
 
-> **Enfoque MVP**: El sistema busca la máxima simplicidad en su diseño, priorizando la implementación rápida y la facilidad de uso. Se minimiza la complejidad de la lógica de negocio, exceptuando el sistema de eventos dinámicos que es fundamental para la flexibilidad del mismo.
+> **Enfoque MVP**: El sistema busca la máxima simplicidad en su diseño, priorizando la implementación rápida y la facilidad de uso. Se minimiza la complejidad de la lógica de negocio mediante el uso de tipos de eventos predefinidos (10 tipos fijos), lo que reduce errores y simplifica la validación.
 
 ### 2.2 Propuesta de Valor
 
 El sistema proporcionará:
 
 1. **Trazabilidad Completa**: Seguimiento del historial completo de cada lote desde la preparación del terreno hasta la comercialización
-2. **Flexibilidad**: Capacidad de adaptar el sistema a nuevos tipos de eventos sin modificar código fuente
+2. **Simplicidad**: 10 tipos de eventos predefinidos que cubren las principales actividades agrícolas
 3. **Accesibilidad**: Información disponible desde cualquier lugar a través de web y API
 4. **Toma de Decisiones**: KPIs y reportes que facilitan la optimización de recursos
 5. **Cumplimiento**: Auditoría completa para certificaciones y normativas
@@ -65,9 +65,9 @@ Los centros de cultivo de limón enfrentan varios desafíos:
    - Estaciones de monitoreo (clima/IoT)
 
 2. **Sistema de Eventos de Trazabilidad**
-   - Eventos base predefinidos (9 categorías principales)
-   - Creación dinámica de nuevos tipos de eventos
-   - Captura de instancias de eventos con campos personalizables
+   - 10 tipos de eventos predefinidos que cubren las principales actividades
+   - Captura de instancias de eventos con campos definidos por esquema JSON
+   - Validación de datos mediante JSON Schema
    - Adjuntos (fotos, documentos, etiquetas)
 
 3. **Gestión de Variables Ambientales**
@@ -92,17 +92,18 @@ Los centros de cultivo de limón enfrentan varios desafíos:
    - Registro de todas las operaciones
    - Histórico de cambios
 
-#### Eventos Base Incluidos
+#### Eventos Predefinidos Incluidos (10 tipos)
 
-1. **Riego**: Método, duración, volumen, presión, CE, pH
-2. **Fertilización**: Productos, dosis, método de aplicación, análisis foliar
-3. **Fitosanitarios**: Productos, dosis, plagas/enfermedades objetivo, método
-4. **Labores Culturales**: Poda, deshierbe, aclareo de frutos
-5. **Monitoreo de Plagas/Enfermedades**: Detección, severidad, ubicación
-6. **Brotes**: Incidencias significativas
-7. **Clima**: Registro de condiciones meteorológicas
+1. **Aplicación de Riego**: Método, duración, volumen, presión, CE, pH
+2. **Aplicación de Fertilizante**: Productos, dosis, método de aplicación, análisis foliar
+3. **Aplicación Fitosanitaria**: Productos, dosis, plagas/enfermedades objetivo, método
+4. **Labores de Cultivo**: Poda, deshierbe, aclareo de frutos
+5. **Monitoreo de Plagas**: Detección, severidad, ubicación
+6. **Brote de Plaga/Enfermedad**: Incidencias significativas
+7. **Condiciones Climáticas**: Registro de condiciones meteorológicas
 8. **Cosecha**: Rendimiento, calidad, cuadrillas
-9. **Poscosecha**: Almacenamiento, procesamiento
+9. **Almacenamiento Poscosecha**: Almacenamiento, procesamiento
+10. **Mano de Obra y Costos**: Registro de recursos humanos y costos
 
 #### Variables Prioritarias
 
@@ -186,8 +187,8 @@ Los centros de cultivo de limón enfrentan varios desafíos:
 
 El proyecto será considerado exitoso si cumple:
 
-1. ✅ **Funcionalidad**: Registro y consulta de al menos los 9 eventos base
-2. ✅ **Flexibilidad**: Creación de al menos 2 eventos personalizados sin modificar código
+1. ✅ **Funcionalidad**: Registro y consulta de los 10 eventos predefinidos
+2. ✅ **Completitud**: Todos los 10 tipos de eventos funcionando correctamente
 3. ✅ **Usabilidad**: Tiempo de capacitación < 2 horas para usuarios técnicos
 4. ✅ **Rendimiento**: Consultas de trazabilidad < 2 segundos
 5. ✅ **Disponibilidad**: API funcional con documentación completa
@@ -199,7 +200,7 @@ El proyecto será considerado exitoso si cumple:
 | Riesgo | Probabilidad | Impacto | Mitigación |
 |--------|--------------|---------|------------|
 | Resistencia al cambio del personal | Media | Alto | Capacitación, demostrar valor temprano |
-| Complejidad del sistema de eventos dinámicos | Alta | Alto | Prototipos tempranos, validación incremental |
+| Validación de formularios complejos | Media | Medio | Validación estricta con JSON Schema, pruebas exhaustivas |
 | Falta de datos históricos | Media | Medio | Migración gradual, inicio desde temporada actual |
 | Conectividad limitada en campo | Alta | Medio | Modo offline futuro, captura desde oficina |
 

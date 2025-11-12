@@ -1,8 +1,8 @@
-# Guía de Uso: Sistema de Eventos Dinámicos
+# Guía de Uso: Sistema de Eventos
 
 ## Introducción
 
-El sistema de eventos dinámicos permite registrar actividades de trazabilidad agrícola de forma flexible. Cada tipo de evento puede tener campos personalizados definidos mediante JSON Schema.
+El sistema de eventos permite registrar actividades de trazabilidad agrícola. El sistema incluye 10 tipos de eventos predefinidos, cada uno con campos específicos definidos mediante JSON Schema.
 
 ## Primeros Pasos
 
@@ -14,14 +14,17 @@ Para comenzar a usar el sistema, primero debes cargar los tipos de eventos prede
 python manage.py loaddata apps/events/fixtures/event_types.json
 ```
 
-Esto creará 7 tipos de eventos:
-- Riego por Goteo
-- Fertilización Foliar
-- Aplicación Fitosanitaria
-- Cosecha
-- Poda
-- Monitoreo de Plagas
-- Análisis de Suelo
+Esto creará los 10 tipos de eventos predefinidos:
+1. Aplicación de Riego
+2. Aplicación de Fertilizante
+3. Aplicación Fitosanitaria
+4. Labores de Cultivo
+5. Monitoreo de Plagas
+6. Brote de Plaga/Enfermedad
+7. Condiciones Climáticas
+8. Cosecha
+9. Almacenamiento Poscosecha
+10. Mano de Obra y Costos
 
 ### 2. Acceder al Sistema
 
@@ -58,9 +61,9 @@ Navega a `/events/create/` o haz clic en el botón "Crear" desde la lista de eve
 3. **Campo**: Selecciona la parcela donde ocurrió
 4. **Campaña**: (Opcional) Asocia el evento a una campaña
 
-### Paso 3: Completar Campos Dinámicos
+### Paso 3: Completar Campos del Evento
 
-Cuando selecciones un tipo de evento, el formulario mostrará automáticamente los campos específicos requeridos:
+Cuando selecciones un tipo de evento, el formulario mostrará automáticamente los campos específicos definidos en el esquema del tipo:
 
 **Ejemplo para "Riego por Goteo":**
 - Duración (horas) - Campo numérico
@@ -189,7 +192,7 @@ Navega a `/events/` para ver la lista completa con:
 
 Haz clic en cualquier evento de la lista para ver:
 - Información completa del evento
-- Datos dinámicos formateados
+- Datos del payload formateados según el esquema
 - Observaciones
 - Metadatos (usuario, fechas)
 - Información del campo y campaña
