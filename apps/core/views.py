@@ -1,8 +1,22 @@
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
+from django.contrib.auth.views import LoginView
+from django.shortcuts import render, redirect
+from django.urls import reverse_lazy
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from drf_spectacular.utils import extend_schema, OpenApiExample
 from .serializers import CustomTokenObtainPairSerializer
+
+
+class CustomLoginView(LoginView):
+    """
+    Vista personalizada de login que redirige al dashboard si el usuario ya está autenticado.
+    """
+    template_name = 'registration/login.html'
+    redirect_authenticated_user = True
+    
+    def get_success_url(self):
+        """Redirigir al dashboard después del login exitoso."""
+        return reverse_lazy('dashboard')
 
 
 @login_required

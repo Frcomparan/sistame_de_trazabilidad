@@ -10,6 +10,7 @@ from django.conf.urls.static import static
 from django.views.generic import RedirectView, TemplateView
 from django.views.static import serve
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
+from apps.core.views import CustomLoginView
 import os
 
 urlpatterns = [
@@ -17,7 +18,7 @@ urlpatterns = [
     path('', RedirectView.as_view(pattern_name='login', permanent=False), name='root'),
     
     # Authentication URLs
-    path('login/', auth_views.LoginView.as_view(template_name='registration/login.html'), name='login'),
+    path('login/', CustomLoginView.as_view(), name='login'),
     path('logout/', auth_views.LogoutView.as_view(next_page='login'), name='logout'),
     
     # Admin
