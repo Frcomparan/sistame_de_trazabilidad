@@ -52,7 +52,9 @@
                                 <strong>{{ event.field.name }}</strong>
                                 <span class="text-muted">({{ event.field.code }})</span>
                             </p>
+                            {% if event.field.location %}
                             <small class="text-muted">{{ event.field.location }}</small>
+                            {% endif %}
                         </div>
                         <div class="col-md-6 mb-3">
                             <h6 class="text-muted small mb-1">CAMPAÑA</h6>
@@ -80,7 +82,6 @@
             </div>
 
             <!-- Datos Específicos del Evento -->
-            {% if event.payload %}
             <div class="card mb-4">
                 <div class="card-header bg-white">
                     <h5 class="mb-0">
@@ -91,30 +92,132 @@
                     <div class="table-responsive">
                         <table class="table table-sm">
                             <tbody>
-                                {% for key, value in event.payload.items %}
-                                <tr>
-                                    <th class="text-muted" style="width: 40%;">
-                                        {{ key|replace:"_: "|title }}
-                                    </th>
-                                    <td>
-                                        {% if value is None %}
-                                            <span class="text-muted fst-italic">Sin datos</span>
-                                        {% elif value == True %}
+                                {% if event.event_type.name == 'Aplicación de Riego' %}
+                                    <tr><th class="text-muted" style="width: 40%;">Método de Riego</th><td>{{ event.metodo }}</td></tr>
+                                    <tr><th class="text-muted">Duración (minutos)</th><td>{{ event.duracion_minutos }}</td></tr>
+                                    <tr><th class="text-muted">Fuente de Agua</th><td>{{ event.fuente_agua }}</td></tr>
+                                    {% if event.volumen_m3 %}<tr><th class="text-muted">Volumen (m³)</th><td>{{ event.volumen_m3 }}</td></tr>{% endif %}
+                                    {% if event.presion_bar %}<tr><th class="text-muted">Presión (bar)</th><td>{{ event.presion_bar }}</td></tr>{% endif %}
+                                    {% if event.ce_uScm %}<tr><th class="text-muted">CE (µS/cm)</th><td>{{ event.ce_uScm }}</td></tr>{% endif %}
+                                    {% if event.ph %}<tr><th class="text-muted">pH</th><td>{{ event.ph }}</td></tr>{% endif %}
+                                
+                                {% elif event.event_type.name == 'Aplicación de Fertilizante' %}
+                                    <tr><th class="text-muted">Producto</th><td>{{ event.producto }}</td></tr>
+                                    <tr><th class="text-muted">Método de Aplicación</th><td>{{ event.metodo_aplicacion }}</td></tr>
+                                    <tr><th class="text-muted">Dosis</th><td>{{ event.dosis }} {{ event.unidad_dosis }}</td></tr>
+                                    {% if event.n_porcentaje %}<tr><th class="text-muted">Nitrógeno (%)</th><td>{{ event.n_porcentaje }}</td></tr>{% endif %}
+                                    {% if event.p_porcentaje %}<tr><th class="text-muted">Fósforo (%)</th><td>{{ event.p_porcentaje }}</td></tr>{% endif %}
+                                    {% if event.k_porcentaje %}<tr><th class="text-muted">Potasio (%)</th><td>{{ event.k_porcentaje }}</td></tr>{% endif %}
+                                    {% if event.volumen_caldo_l %}<tr><th class="text-muted">Volumen de Caldo (L)</th><td>{{ event.volumen_caldo_l }}</td></tr>{% endif %}
+                                
+                                {% elif event.event_type.name == 'Aplicación Fitosanitaria' %}
+                                    <tr><th class="text-muted">Producto</th><td>{{ event.producto }}</td></tr>
+                                    {% if event.ingrediente_activo %}<tr><th class="text-muted">Ingrediente Activo</th><td>{{ event.ingrediente_activo }}</td></tr>{% endif %}
+                                    <tr><th class="text-muted">Tipo de Producto</th><td>{{ event.tipo_producto }}</td></tr>
+                                    <tr><th class="text-muted">Objetivo</th><td>{{ event.objetivo }}</td></tr>
+                                    <tr><th class="text-muted">Método de Aplicación</th><td>{{ event.metodo_aplicacion }}</td></tr>
+                                    <tr><th class="text-muted">Dosis</th><td>{{ event.dosis }} {{ event.unidad_dosis }}</td></tr>
+                                    {% if event.lote_producto %}<tr><th class="text-muted">Lote del Producto</th><td>{{ event.lote_producto }}</td></tr>{% endif %}
+                                    {% if event.volumen_caldo_l %}<tr><th class="text-muted">Volumen de Caldo (L)</th><td>{{ event.volumen_caldo_l }}</td></tr>{% endif %}
+                                    {% if event.presion_bar %}<tr><th class="text-muted">Presión (bar)</th><td>{{ event.presion_bar }}</td></tr>{% endif %}
+                                    {% if event.intervalo_seguridad_dias %}<tr><th class="text-muted">Intervalo de Seguridad (días)</th><td>{{ event.intervalo_seguridad_dias }}</td></tr>{% endif %}
+                                    {% if event.responsable_aplicacion %}<tr><th class="text-muted">Responsable</th><td>{{ event.responsable_aplicacion }}</td></tr>{% endif %}
+                                    {% if event.eficacia_observada %}<tr><th class="text-muted">Eficacia Observada</th><td>{{ event.eficacia_observada }}</td></tr>{% endif %}
+                                    <tr><th class="text-muted">Fitotoxicidad</th><td>{% if event.fitotoxicidad %}<i class="bi bi-check-circle-fill text-success"></i> Sí{% else %}<i class="bi bi-x-circle-fill text-danger"></i> No{% endif %}</td></tr>
+                                
+                                {% elif event.event_type.name == 'Labores de Cultivo' %}
+                                    <tr><th class="text-muted">Actividad</th><td>{{ event.actividad }}</td></tr>
+                                    <tr><th class="text-muted">Horas-Hombre</th><td>{{ event.horas_hombre }}</td></tr>
+                                    {% if event.herramienta_equipo %}<tr><th class="text-muted">Herramienta/Equipo</th><td>{{ event.herramienta_equipo }}</td></tr>{% endif %}
+                                    {% if event.numero_jornales %}<tr><th class="text-muted">Número de Jornales</th><td>{{ event.numero_jornales }}</td></tr>{% endif %}
+                                    {% if event.objetivo %}<tr><th class="text-muted">Objetivo</th><td>{{ event.objetivo }}</td></tr>{% endif %}
+                                    {% if event.porcentaje_completado %}<tr><th class="text-muted">Porcentaje Completado</th><td>{{ event.porcentaje_completado }}%</td></tr>{% endif %}
+                                    {% if event.herramientas_desinfectadas is not None %}<tr><th class="text-muted">Herramientas Desinfectadas</th><td>{% if event.herramientas_desinfectadas %}<i class="bi bi-check-circle-fill text-success"></i> Sí{% else %}<i class="bi bi-x-circle-fill text-danger"></i> No{% endif %}</td></tr>{% endif %}
+                                
+                                {% elif event.event_type.name == 'Monitoreo de Plagas' %}
+                                    <tr><th class="text-muted">Plaga/Enfermedad</th><td>{{ event.plaga_enfermedad }}</td></tr>
+                                    <tr><th class="text-muted">Método de Muestreo</th><td>{{ event.metodo_muestreo }}</td></tr>
+                                    <tr><th class="text-muted">Incidencia</th><td>{{ event.incidencia }}</td></tr>
+                                    {% if event.severidad %}<tr><th class="text-muted">Severidad</th><td>{{ event.severidad }}</td></tr>{% endif %}
+                                    {% if event.ubicacion_campo %}<tr><th class="text-muted">Ubicación en el Campo</th><td>{{ event.ubicacion_campo }}</td></tr>{% endif %}
+                                    {% if event.numero_muestras %}<tr><th class="text-muted">Número de Muestras</th><td>{{ event.numero_muestras }}</td></tr>{% endif %}
+                                    {% if event.accion_recomendada %}<tr><th class="text-muted">Acción Recomendada</th><td>{{ event.accion_recomendada }}</td></tr>{% endif %}
+                                
+                                {% elif event.event_type.name == 'Brote de Plaga/Enfermedad' %}
+                                    <tr><th class="text-muted">Tipo de Problema</th><td>{{ event.tipo_problema }}</td></tr>
+                                    <tr><th class="text-muted">Severidad</th><td>{{ event.severidad }}</td></tr>
+                                    <tr><th class="text-muted">Método de Detección</th><td>{{ event.metodo_deteccion }}</td></tr>
+                                    {% if event.area_afectada_ha %}<tr><th class="text-muted">Área Afectada (ha)</th><td>{{ event.area_afectada_ha }}</td></tr>{% endif %}
+                                    {% if event.porcentaje_afectacion %}<tr><th class="text-muted">Porcentaje de Afectación</th><td>{{ event.porcentaje_afectacion }}%</td></tr>{% endif %}
+                                    <tr><th class="text-muted">Requiere Tratamiento</th><td>{% if event.requiere_tratamiento %}<i class="bi bi-check-circle-fill text-success"></i> Sí{% else %}<i class="bi bi-x-circle-fill text-danger"></i> No{% endif %}</td></tr>
+                                    {% if event.accion_inmediata %}<tr><th class="text-muted">Acción Inmediata</th><td>{{ event.accion_inmediata }}</td></tr>{% endif %}
+                                
+                                {% elif event.event_type.name == 'Condiciones Climáticas' %}
+                                    <tr><th class="text-muted">Temperatura Máxima</th><td>{{ event.temperatura_max }} °C</td></tr>
+                                    <tr><th class="text-muted">Temperatura Mínima</th><td>{{ event.temperatura_min }} °C</td></tr>
+                                    {% if event.humedad_relativa %}<tr><th class="text-muted">Humedad Relativa</th><td>{{ event.humedad_relativa }}%</td></tr>{% endif %}
+                                    {% if event.precipitacion_mm %}<tr><th class="text-muted">Precipitación</th><td>{{ event.precipitacion_mm }} mm</td></tr>{% endif %}
+                                    {% if event.velocidad_viento_ms %}<tr><th class="text-muted">Velocidad del Viento</th><td>{{ event.velocidad_viento_ms }} m/s</td></tr>{% endif %}
+                                    {% if event.viento %}<tr><th class="text-muted">Condición de Viento</th><td>{{ event.viento }}</td></tr>{% endif %}
+                                    {% if event.radiacion_solar_wm2 %}<tr><th class="text-muted">Radiación Solar</th><td>{{ event.radiacion_solar_wm2 }} W/m²</td></tr>{% endif %}
+                                
+                                {% elif event.event_type.name == 'Cosecha' %}
+                                    {% if event.variedad %}<tr><th class="text-muted">Variedad</th><td>{{ event.variedad }}</td></tr>{% endif %}
+                                    <tr><th class="text-muted">Volumen Total</th><td>{{ event.volumen_kg }} kg</td></tr>
+                                    <tr><th class="text-muted">Rendimiento</th><td>{{ event.rendimiento_kg_ha }} kg/ha</td></tr>
+                                    {% if event.calidad %}<tr><th class="text-muted">Calidad</th><td>{{ event.get_calidad_display }}</td></tr>{% endif %}
+                                    {% if event.numero_trabajadores %}<tr><th class="text-muted">Número de Trabajadores</th><td>{{ event.numero_trabajadores }}</td></tr>{% endif %}
+                                    {% if event.horas_trabajo %}<tr><th class="text-muted">Horas de Trabajo</th><td>{{ event.horas_trabajo }}</td></tr>{% endif %}
+                                    {% if event.fecha_inicio %}<tr><th class="text-muted">Fecha Inicio</th><td>{{ event.fecha_inicio|date:"d/m/Y" }}</td></tr>{% endif %}
+                                    {% if event.fecha_fin %}<tr><th class="text-muted">Fecha Fin</th><td>{{ event.fecha_fin|date:"d/m/Y" }}</td></tr>{% endif %}
+                                
+                                {% elif event.event_type.name == 'Almacenamiento Poscosecha' %}
+                                    <tr><th class="text-muted">Producto</th><td>{{ event.producto }}</td></tr>
+                                    <tr><th class="text-muted">Cantidad</th><td>{{ event.cantidad_kg }} kg</td></tr>
+                                    <tr><th class="text-muted">Temperatura</th><td>{{ event.temperatura }} °C</td></tr>
+                                    <tr><th class="text-muted">Humedad</th><td>{{ event.humedad }}%</td></tr>
+                                    {% if event.tipo_almacenamiento %}<tr><th class="text-muted">Tipo de Almacenamiento</th><td>{{ event.tipo_almacenamiento }}</td></tr>{% endif %}
+                                    {% if event.fecha_ingreso %}<tr><th class="text-muted">Fecha de Ingreso</th><td>{{ event.fecha_ingreso|date:"d/m/Y" }}</td></tr>{% endif %}
+                                    {% if event.fecha_salida_prevista %}<tr><th class="text-muted">Fecha de Salida Prevista</th><td>{{ event.fecha_salida_prevista|date:"d/m/Y" }}</td></tr>{% endif %}
+                                    {% if event.condiciones_observadas %}<tr><th class="text-muted">Condiciones Observadas</th><td>{{ event.condiciones_observadas }}</td></tr>{% endif %}
+                                
+                                {% elif event.event_type.name == 'Mano de Obra y Costos' %}
+                                    <tr><th class="text-muted">Actividad</th><td>{{ event.actividad }}</td></tr>
+                                    <tr><th class="text-muted">Número de Trabajadores</th><td>{{ event.numero_trabajadores }}</td></tr>
+                                    {% if event.horas_trabajo %}<tr><th class="text-muted">Horas de Trabajo</th><td>{{ event.horas_trabajo }}</td></tr>{% endif %}
+                                    {% if event.costo_hora %}<tr><th class="text-muted">Costo por Hora</th><td>${{ event.costo_hora }}</td></tr>{% endif %}
+                                    <tr><th class="text-muted">Costo Total</th><td><strong>${{ event.costo_total }}</strong></td></tr>
+                                
+                                {% else %}
+                                    <!-- Fallback: mostrar todos los campos disponibles del modelo -->
+                                    {% for field in event._meta.get_fields %}
+                                        {% if field.name not in 'id,event_type,field,campaign,timestamp,observations,created_by,created_at,updated_at' %}
+                                            {% if field.value_from_object %}
+                                                <tr>
+                                                    <th class="text-muted">{{ field.verbose_name|title }}</th>
+                                                    <td>
+                                                        {% with value=field.value_from_object|default:"" %}
+                                                            {% if value == True %}
                                             <i class="bi bi-check-circle-fill text-success"></i> Sí
                                         {% elif value == False %}
                                             <i class="bi bi-x-circle-fill text-danger"></i> No
+                                                            {% elif value %}
+                                                                {{ value }}
                                         {% else %}
-                                            {{ value }}
+                                                                <span class="text-muted fst-italic">Sin datos</span>
+                                                            {% endif %}
+                                                        {% endwith %}
+                                                    </td>
+                                                </tr>
+                                            {% endif %}
                                         {% endif %}
-                                    </td>
-                                </tr>
                                 {% endfor %}
+                                {% endif %}
                             </tbody>
                         </table>
                     </div>
                 </div>
             </div>
-            {% endif %}
 
             <!-- Observaciones -->
             {% if event.observations %}
@@ -143,13 +246,6 @@
                         <a href="{% url 'event_list' %}" class="btn btn-outline-secondary btn-sm">
                             <i class="bi bi-arrow-left"></i> Volver a la lista
                         </a>
-                        <!-- Botones para futuras funcionalidades -->
-                        <!-- <a href="#" class="btn btn-outline-primary btn-sm">
-                            <i class="bi bi-pencil"></i> Editar evento
-                        </a>
-                        <button class="btn btn-outline-danger btn-sm">
-                            <i class="bi bi-trash"></i> Eliminar evento
-                        </button> -->
                     </div>
                 </div>
             </div>
@@ -169,17 +265,15 @@
                         <dt class="small text-muted">Código</dt>
                         <dd><code>{{ event.field.code }}</code></dd>
                         
+                        {% if event.field.location %}
                         <dt class="small text-muted">Ubicación</dt>
-                        <dd>{{ event.field.location|default:"No especificada" }}</dd>
+                            <dd>{{ event.field.location }}</dd>
+                        {% endif %}
                         
+                        {% if event.field.surface_ha %}
                         <dt class="small text-muted">Superficie</dt>
-                        <dd>
-                            {% if event.field.area %}
-                                {{ event.field.area }} ha
-                            {% else %}
-                                <span class="text-muted">No especificada</span>
+                            <dd>{{ event.field.surface_ha }} ha</dd>
                             {% endif %}
-                        </dd>
                     </dl>
                 </div>
             </div>
@@ -200,13 +294,19 @@
                         <dt class="small text-muted">Temporada</dt>
                         <dd><span class="badge bg-info">{{ event.campaign.season }}</span></dd>
                         
-                        <dt class="small text-muted">Cultivo</dt>
-                        <dd>{{ event.campaign.crop|default:"No especificado" }}</dd>
+                        {% if event.campaign.variety %}
+                            <dt class="small text-muted">Variedad</dt>
+                            <dd>{{ event.campaign.variety }}</dd>
+                        {% endif %}
                         
                         <dt class="small text-muted">Periodo</dt>
                         <dd>
                             {{ event.campaign.start_date|date:"d/m/Y" }} - 
-                            {{ event.campaign.end_date|date:"d/m/Y"|default:"Activa" }}
+                            {% if event.campaign.end_date %}
+                                {{ event.campaign.end_date|date:"d/m/Y" }}
+                            {% else %}
+                                <span class="badge bg-success">Activa</span>
+                            {% endif %}
                         </dd>
                     </dl>
                 </div>

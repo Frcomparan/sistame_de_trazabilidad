@@ -11,15 +11,16 @@ from django.db import transaction
 from datetime import datetime, timedelta
 import pytz
 from django.http import JsonResponse
-import json
-from jsonschema import validate as json_validate, ValidationError as JSONSchemaValidationError
 from .models import Event, EventType, Attachment
 from apps.catalogs.models import Field, Campaign
+from .forms import get_event_form, EVENT_FORM_MAP
+from .event_models import get_event_model, EVENT_TYPE_MODEL_MAP
 from .serializers import (
     EventSerializer, 
     EventListSerializer, 
     EventTypeSerializer,
-    EventCreateSerializer
+    EventCreateSerializer,
+    get_event_serializer,
 )
 
 
@@ -186,9 +187,9 @@ class EventTypeListView(generics.ListAPIView):
 @extend_schema(
     summary="Crear Evento",
     description="""
-    Crea un nuevo evento de trazabilidad con validación dinámica del payload.
+    Crea un nuevo evento de trazabilidad.
     
-    El payload debe cumplir con el JSON Schema definido en el EventType.
+    El tipo de evento determina qué campos específicos se requieren.
     
     **Casos de uso:**
     - Registrar aplicación fitosanitaria
@@ -199,21 +200,21 @@ class EventTypeListView(generics.ListAPIView):
     **Validación:**
     - El tipo de evento debe estar activo
     - El campo debe existir y estar activo
-    - El payload debe cumplir con el JSON Schema
+    - Los campos requeridos dependen del tipo de evento seleccionado
     - La campaña (opcional) debe pertenecer al campo
     """,
     tags=['Eventos de Trazabilidad'],
     request=EventCreateSerializer,
     responses={
         201: EventSerializer,
-        400: OpenApiResponse(description="Datos inválidos o payload que no cumple schema"),
+        400: OpenApiResponse(description="Datos inválidos o campos requeridos faltantes"),
     },
 )
 class EventCreateView(generics.CreateAPIView):
     """
     API endpoint para crear eventos de trazabilidad.
     
-    Valida el payload contra el JSON Schema del tipo de evento.
+    Crea un evento usando el modelo específico según el tipo de evento.
     """
     serializer_class = EventCreateSerializer
     
@@ -221,24 +222,25 @@ class EventCreateView(generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         
-        # Validar payload contra el schema del tipo de evento
+        # Obtener el tipo de evento y determinar el modelo específico
         event_type = serializer.validated_data['event_type']
-        payload = serializer.validated_data.get('payload', {})
+        model_class = get_event_model(event_type.name)
+        serializer_class = get_event_serializer(event_type.name)
         
-        if event_type.schema:
-            try:
-                json_validate(instance=payload, schema=event_type.schema)
-            except JSONSchemaValidationError as e:
-                return Response(
-                    {'payload': f'El payload no cumple con el schema: {e.message}'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+        # Si hay un serializer específico, usarlo
+        if serializer_class != EventSerializer:
+            specific_serializer = serializer_class(data=request.data)
+            specific_serializer.is_valid(raise_exception=True)
+            event = specific_serializer.save(
+                event_type=event_type,
+                created_by=request.user if request.user.is_authenticated else None
+            )
+            response_serializer = serializer_class(event)
+        else:
+            # Fallback al serializer base
+            event = serializer.save(created_by=request.user if request.user.is_authenticated else None)
+            response_serializer = EventSerializer(event)
         
-        # Crear el evento
-        event = serializer.save(created_by=request.user if request.user.is_authenticated else None)
-        
-        # Serializar respuesta completa
-        response_serializer = EventSerializer(event)
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
 
 
@@ -296,105 +298,52 @@ def event_list_view(request):
 
 @login_required
 def event_create_view(request):
-    """Vista para crear un nuevo evento dinámico."""
-    if request.method == 'POST':
-        try:
-            with transaction.atomic():
-                # Obtener datos del formulario
-                event_type = get_object_or_404(EventType, pk=request.POST.get('event_type'))
-                field = get_object_or_404(Field, pk=request.POST.get('field'))
-                campaign_id = request.POST.get('campaign')
-                campaign = get_object_or_404(Campaign, pk=campaign_id) if campaign_id else None
-                
-                # Construir payload dinámico desde el formulario
-                payload = {}
-                for key, value in request.POST.items():
-                    if key.startswith('payload_'):
-                        field_name = key.replace('payload_', '')
-                        # Intentar parsear como JSON si parece ser un objeto/array
-                        if value.startswith('{') or value.startswith('['):
-                            try:
-                                payload[field_name] = json.loads(value)
-                            except json.JSONDecodeError:
-                                payload[field_name] = value
-                        elif value.lower() in ('true', 'false'):
-                            payload[field_name] = value.lower() == 'true'
-                        elif value.replace('.', '', 1).isdigit():
-                            payload[field_name] = float(value) if '.' in value else int(value)
-                        else:
-                            payload[field_name] = value
-                
-                # Validar payload contra schema
-                if event_type.schema:
-                    try:
-                        json_validate(instance=payload, schema=event_type.schema)
-                    except JSONSchemaValidationError as e:
-                        messages.error(request, f'Error en los datos: {e.message}')
-                        raise
-                
-                # Convertir timestamp a datetime con zona horaria
-                timestamp_str = request.POST.get('timestamp')
-                
-                # El input datetime-local envía formato: "2025-10-29T16:44"
-                # Parseamos como datetime naive y luego lo localizamos a la zona horaria de Django
-                try:
-                    # Intentar parsear el formato del datetime-local
-                    timestamp_naive = datetime.strptime(timestamp_str, '%Y-%m-%dT%H:%M')
-                except ValueError:
-                    # Si falla, intentar con el formato ISO completo
-                    timestamp_naive = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
-                    if not timezone.is_naive(timestamp_naive):
-                        # Si ya tiene zona horaria, convertir a la zona horaria local
-                        local_tz = pytz.timezone('America/Mexico_City')
-                        timestamp_aware = timestamp_naive.astimezone(local_tz)
-                    else:
-                        # Si es naive, localizarlo
-                        local_tz = pytz.timezone('America/Mexico_City')
-                        timestamp_aware = local_tz.localize(timestamp_naive)
-                else:
-                    # Localizar el datetime naive a la zona horaria de Django
-                    local_tz = pytz.timezone('America/Mexico_City')
-                    timestamp_aware = local_tz.localize(timestamp_naive)
-                
-                # Validar que el timestamp no esté en el futuro
-                max_timestamp = timezone.now() + timedelta(hours=1)
-                if timestamp_aware > max_timestamp:
-                    messages.error(request, f'El timestamp no puede estar más de 1 hora en el futuro.')
-                    raise ValueError('Timestamp en el futuro')
-                
-                # Crear evento
-                event = Event.objects.create(
-                    event_type=event_type,
-                    field=field,
-                    campaign=campaign,
-                    timestamp=timestamp_aware,
-                    payload=payload,
-                    observations=request.POST.get('observations', ''),
-                    created_by=request.user
-                )
-                
-                messages.success(request, f'Evento "{event_type.name}" registrado exitosamente.')
-                return redirect('event_list')
-                
-        except Exception as e:
-            messages.error(request, f'Error al crear evento: {str(e)}')
+    """Vista para crear un nuevo evento."""
+    event_type_id = request.GET.get('event_type') or request.POST.get('event_type')
+    event_type = None
+    form = None
     
-    # GET request - mostrar formulario
+    if event_type_id:
+        event_type = get_object_or_404(EventType, pk=event_type_id, is_active=True)
+        FormClass = get_event_form(event_type.name)
+        
+        if not FormClass:
+            messages.error(request, f'No se encontró formulario para el tipo de evento: {event_type.name}')
+            return redirect('event_list')
+        
+        if request.method == 'POST':
+            form = FormClass(request.POST)
+            if form.is_valid():
+                try:
+                    with transaction.atomic():
+                        event = form.save(commit=False)
+                        event.event_type = event_type
+                        event.created_by = request.user
+                        event.full_clean()  # Ejecutar validaciones del modelo
+                        event.save()
+                        
+                        messages.success(request, f'Evento "{event_type.name}" registrado exitosamente.')
+                        return redirect('event_list')
+                except Exception as e:
+                    messages.error(request, f'Error al crear evento: {str(e)}')
+        else:
+            form = FormClass(initial={'event_type': event_type})
+    else:
+        # Si no hay event_type seleccionado, mostrar selector
+        if request.method == 'POST':
+            messages.error(request, 'Debe seleccionar un tipo de evento.')
+    
+    # GET request o error - mostrar formulario o selector
     event_types = EventType.objects.filter(is_active=True).order_by('category', 'name')
     fields = Field.objects.filter(is_active=True).order_by('name')
     campaigns = Campaign.objects.filter(is_active=True).order_by('-start_date')
-    
-    # Serializar schemas a JSON para el template
-    for et in event_types:
-        if et.schema:
-            et.schema_json = json.dumps(et.schema)
-        else:
-            et.schema_json = '{}'
     
     context = {
         'event_types': event_types,
         'fields': fields,
         'campaigns': campaigns,
+        'event_type': event_type,
+        'form': form,
         'action': 'Crear'
     }
     return render(request, 'events/event_form.html', context)
@@ -403,34 +352,46 @@ def event_create_view(request):
 @login_required
 def event_detail_view(request, pk):
     """Vista de detalle de un evento."""
-    event = get_object_or_404(
-        Event.objects.select_related('event_type', 'field', 'campaign', 'created_by'),
-        pk=pk
-    )
+    # Intentar obtener el evento específico primero
+    event = None
+    for model_class in EVENT_TYPE_MODEL_MAP.values():
+        try:
+            event = model_class.objects.select_related('event_type', 'field', 'campaign', 'created_by').get(pk=pk)
+            break
+        except model_class.DoesNotExist:
+            continue
     
-    # Formatear payload para visualización
-    payload_formatted = json.dumps(event.payload, indent=2, ensure_ascii=False)
+    # Si no se encontró en modelos específicos, buscar en Event base
+    if event is None:
+        event = get_object_or_404(
+            Event.objects.select_related('event_type', 'field', 'campaign', 'created_by'),
+            pk=pk
+        )
     
     context = {
         'event': event,
-        'payload_formatted': payload_formatted,
     }
     return render(request, 'events/event_detail.html', context)
 
 
 @login_required
-def get_event_type_schema(request, pk):
-    """API auxiliar para obtener el schema de un tipo de evento."""
+def get_event_type_info(request, pk):
+    """API auxiliar para obtener información de un tipo de evento."""
     event_type = get_object_or_404(EventType, pk=pk)
+    
+    # Obtener el modelo específico asociado
+    model_class = get_event_model(event_type.name)
+    form_class = get_event_form(event_type.name)
     
     return JsonResponse({
         'id': event_type.id,
         'name': event_type.name,
         'category': event_type.category,
         'description': event_type.description,
-        'schema': event_type.schema,
         'icon': event_type.icon,
         'color': event_type.color,
+        'model_name': model_class.__name__ if model_class else 'Event',
+        'has_form': form_class is not None,
     })
 
 
@@ -456,137 +417,35 @@ def event_type_list_view(request):
 
 @login_required
 def event_type_create_view(request):
-    """Vista para crear un nuevo tipo de evento."""
-    if request.method == 'POST':
-        try:
-            # Parsear schema JSON
-            schema_text = request.POST.get('schema', '{}')
-            try:
-                schema = json.loads(schema_text)
-            except json.JSONDecodeError:
-                messages.error(request, 'El esquema JSON no es válido')
-                raise
-            
-            # Crear tipo de evento
-            event_type = EventType.objects.create(
-                name=request.POST.get('name'),
-                category=request.POST.get('category'),
-                description=request.POST.get('description', ''),
-                schema=schema,
-                icon=request.POST.get('icon', 'calendar-event'),
-                color=request.POST.get('color', '#6c757d'),
-                is_active=request.POST.get('is_active') == 'on'
-            )
-            
-            messages.success(request, f'Tipo de evento "{event_type.name}" creado exitosamente.')
-            return redirect('event_type_list')
-            
-        except Exception as e:
-            messages.error(request, f'Error al crear tipo de evento: {str(e)}')
-    
-    # Ejemplo de schema para ayudar al usuario
-    example_schema = {
-        "type": "object",
-        "title": "Datos del Evento",
-        "required": ["campo_obligatorio"],
-        "properties": {
-            "campo_obligatorio": {
-                "type": "string",
-                "title": "Campo Obligatorio",
-                "description": "Descripción del campo",
-                "maxLength": 200,
-                "example": "Valor de ejemplo"
-            },
-            "campo_numero": {
-                "type": "number",
-                "title": "Campo Numérico",
-                "minimum": 0,
-                "maximum": 100,
-                "example": 50
-            },
-            "campo_seleccion": {
-                "type": "string",
-                "title": "Campo de Selección",
-                "enum": ["Opción 1", "Opción 2", "Opción 3"],
-                "example": "Opción 1"
-            }
-        }
-    }
-    
-    context = {
-        'action': 'Crear',
-        'categories': EventType.CATEGORIES,
-        'example_schema': json.dumps(example_schema, indent=2, ensure_ascii=False),
-    }
-    return render(request, 'events/event_type_form.html', context)
+    """Vista para crear un nuevo tipo de evento (deshabilitada - tipos son fijos)."""
+    messages.warning(request, 'Los tipos de eventos son predefinidos y no se pueden crear nuevos.')
+    return redirect('event_type_list')
 
 
 @login_required
 def event_type_edit_view(request, pk):
-    """Vista para editar un tipo de evento existente."""
+    """Vista para editar metadata de un tipo de evento (solo icon, color, description, is_active)."""
     event_type = get_object_or_404(EventType, pk=pk)
     
     if request.method == 'POST':
         try:
-            # Parsear schema JSON
-            schema_text = request.POST.get('schema', '{}')
-            try:
-                schema = json.loads(schema_text)
-            except json.JSONDecodeError:
-                messages.error(request, 'El esquema JSON no es válido')
-                raise
-            
-            # Actualizar tipo de evento
-            event_type.name = request.POST.get('name')
-            event_type.category = request.POST.get('category')
+            # Solo permitir editar metadata, no name ni category (son fijos)
             event_type.description = request.POST.get('description', '')
-            event_type.schema = schema
-            event_type.icon = request.POST.get('icon', 'calendar-event')
+            event_type.icon = request.POST.get('icon', '')
             event_type.color = request.POST.get('color', '#6c757d')
             event_type.is_active = request.POST.get('is_active') == 'on'
             event_type.save()
             
-            messages.success(request, f'Tipo de evento "{event_type.name}" actualizado exitosamente.')
+            messages.success(request, f'Metadata del tipo de evento "{event_type.name}" actualizado exitosamente.')
             return redirect('event_type_list')
             
         except Exception as e:
             messages.error(request, f'Error al actualizar tipo de evento: {str(e)}')
     
-    # Schema de ejemplo para referencia
-    example_schema = {
-        "type": "object",
-        "title": "Ejemplo de Evento",
-        "required": ["campo1"],
-        "properties": {
-            "campo1": {
-                "type": "string",
-                "title": "Campo de Texto",
-                "description": "Descripción del campo",
-                "example": "Valor de ejemplo",
-                "maxLength": 100
-            },
-            "campo2": {
-                "type": "number",
-                "title": "Campo Numérico",
-                "example": 10.5,
-                "minimum": 0,
-                "maximum": 100
-            },
-            "campo3": {
-                "type": "string",
-                "title": "Selección",
-                "enum": ["Opción 1", "Opción 2", "Opción 3"],
-                "example": "Opción 1"
-            }
-        }
-    }
-    
     context = {
         'action': 'Editar',
         'event_type': event_type,
         'categories': EventType.CATEGORIES,
-        'schema_json': json.dumps(event_type.schema, indent=2, ensure_ascii=False) if event_type.schema else '{}',
-        'example_schema': json.dumps(example_schema, indent=2, ensure_ascii=False),
     }
     return render(request, 'events/event_type_form.html', context)
 

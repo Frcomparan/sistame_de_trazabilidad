@@ -4,7 +4,7 @@
 {% block title %}{{ action }} Tipo de Evento - Sistema de Trazabilidad{% endblock %}
 
 {% block content %}
-<div class="container py-4" style="max-width: 1000px;">
+<div class="container py-4" style="max-width: 800px;">
     <!-- Breadcrumb -->
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
@@ -28,10 +28,10 @@
         <div class="d-flex align-items-start">
             <i class="bi bi-info-circle-fill text-info me-2 flex-shrink-0" style="font-size: 1.1rem;"></i>
             <div class="flex-grow-1">
-                <h6 class="mb-1">Esquema JSON</h6>
+                <h6 class="mb-1">Tipos de Eventos Predefinidos</h6>
                 <p class="mb-0 small text-muted">
-                    El esquema define qué campos se mostrarán al crear un evento de este tipo.
-                    Debe seguir el estándar JSON Schema. Consulta el ejemplo abajo para referencia.
+                    Los tipos de eventos son predefinidos y no se pueden crear nuevos. Solo puedes editar
+                    la metadata (descripción, icono, color) y activar/desactivar el tipo.
                 </p>
             </div>
         </div>
@@ -40,264 +40,171 @@
     <!-- Form -->
     <div class="card">
         <div class="card-body">
-            <form method="post" id="eventTypeForm">
-                {% csrf_token %}
-                
-                <!-- Información Básica -->
-                <div class="mb-4">
-                    <h5 class="border-bottom pb-2 mb-3">
-                        <i class="bi bi-info-circle"></i> Información Básica
-                    </h5>
-                    
-                    <div class="row">
-                        <div class="col-md-8 mb-3">
-                            <label for="name" class="form-label">
-                                Nombre del Tipo <span class="text-danger">*</span>
-                                <i class="bi bi-question-circle text-muted" 
-                                   data-bs-toggle="tooltip" 
-                                   title="Nombre descriptivo del tipo de evento"></i>
-                            </label>
-                            <input type="text" 
-                                   class="form-control" 
-                                   id="name" 
-                                   name="name" 
-                                   value="{{ event_type.name|default:'' }}"
-                                   maxlength="100"
-                                   required
-                                   placeholder="Ej: Aplicación de Riego">
-                        </div>
-                        
-                        <div class="col-md-4 mb-3">
-                            <label for="category" class="form-label">
-                                Categoría <span class="text-danger">*</span>
-                            </label>
-                            <select class="form-select" id="category" name="category" required>
-                                <option value="">-- Seleccionar --</option>
-                                {% for key, label in categories %}
-                                    <option value="{{ key }}" {% if event_type.category == key %}selected{% endif %}>
-                                        {{ label }}
-                                    </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="description" class="form-label">
-                            Descripción
-                            <i class="bi bi-question-circle text-muted" 
-                               data-bs-toggle="tooltip" 
-                               title="Descripción detallada del tipo de evento"></i>
-                        </label>
-                        <textarea class="form-control" 
-                                  id="description" 
-                                  name="description" 
-                                  rows="3"
-                                  placeholder="Ej: Registro de aplicación de riego mediante diferentes métodos">{{ event_type.description|default:'' }}</textarea>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="icon" class="form-label">
-                                Icono (Bootstrap Icons)
-                                <i class="bi bi-question-circle text-muted" 
-                                   data-bs-toggle="tooltip" 
-                                   title="Nombre del icono sin el prefijo 'bi-'"></i>
-                            </label>
-                            <div class="input-group">
-                                <span class="input-group-text">
-                                    <i class="bi bi-{{ event_type.icon|default:'calendar-event' }}" id="iconPreview"></i>
-                                </span>
-                                <input type="text" 
-                                       class="form-control" 
-                                       id="icon" 
-                                       name="icon" 
-                                       value="{{ event_type.icon|default:'calendar-event' }}"
-                                       placeholder="calendar-event">
-                            </div>
-                            <small class="text-muted">
-                                Ver iconos en: 
-                                <a href="https://icons.getbootstrap.com/" target="_blank">Bootstrap Icons</a>
-                            </small>
-                        </div>
-                        
-                        <div class="col-md-6 mb-3">
-                            <label for="color" class="form-label">
-                                Color (Hexadecimal)
-                            </label>
-                            <div class="input-group">
-                                <input type="color" 
-                                       class="form-control form-control-color" 
-                                       id="colorPicker" 
-                                       value="{{ event_type.color|default:'#6c757d' }}"
-                                       style="max-width: 60px;">
-                                <input type="text" 
-                                       class="form-control" 
-                                       id="color" 
-                                       name="color" 
-                                       value="{{ event_type.color|default:'#6c757d' }}"
-                                       pattern="^#[0-9A-Fa-f]{6}$"
-                                       placeholder="#6c757d">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="mb-3">
-                        <div class="form-check">
-                            <input class="form-check-input" 
-                                   type="checkbox" 
-                                   id="is_active" 
-                                   name="is_active"
-                                   {% if event_type.is_active or not event_type %}checked{% endif %}>
-                            <label class="form-check-label" for="is_active">
-                                Tipo de evento activo (disponible para crear eventos)
-                            </label>
-                        </div>
+            {% if action == 'Crear' %}
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    Los tipos de eventos son predefinidos. No se pueden crear nuevos tipos.
+                    <div class="mt-2">
+                        <a href="{% url 'event_type_list' %}" class="btn btn-sm btn-outline-secondary">
+                            Volver a la lista
+                        </a>
                     </div>
                 </div>
-
-                <!-- Esquema JSON -->
-                <div class="mb-4">
-                    <h5 class="border-bottom pb-2 mb-3">
-                        <i class="bi bi-code-square"></i> Esquema JSON
-                    </h5>
+            {% else %}
+                <form method="post" id="eventTypeForm">
+                    {% csrf_token %}
                     
-                    <div class="mb-3">
-                        <label for="schema" class="form-label">
-                            JSON Schema <span class="text-danger">*</span>
-                            <i class="bi bi-question-circle text-muted" 
-                               data-bs-toggle="tooltip" 
-                               title="Define los campos personalizados del tipo de evento"></i>
-                        </label>
-                        <textarea class="form-control font-monospace" 
-                                  id="schema" 
-                                  name="schema" 
-                                  rows="15"
-                                  required>{{ schema_json|default:example_schema }}</textarea>
-                        <div class="form-text">
-                            El esquema debe ser un objeto JSON válido siguiendo el estándar JSON Schema Draft 7
+                    <!-- Información Básica (Solo lectura) -->
+                    <div class="mb-4">
+                        <h5 class="border-bottom pb-2 mb-3">
+                            <i class="bi bi-info-circle"></i> Información Básica
+                        </h5>
+                        
+                        <div class="row">
+                            <div class="col-md-8 mb-3">
+                                <label class="form-label">Nombre del Tipo</label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       value="{{ event_type.name }}"
+                                       readonly
+                                       disabled>
+                                <div class="form-text">El nombre no se puede modificar (tipo predefinido)</div>
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Categoría</label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       value="{{ event_type.get_category_display }}"
+                                       readonly
+                                       disabled>
+                                <div class="form-text">La categoría no se puede modificar</div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label">
+                                Descripción
+                                <i class="bi bi-question-circle text-muted" 
+                                   data-bs-toggle="tooltip" 
+                                   title="Descripción detallada del tipo de evento"></i>
+                            </label>
+                            <textarea class="form-control" 
+                                      id="description" 
+                                      name="description" 
+                                      rows="3"
+                                      placeholder="Ej: Registro de aplicación de riego mediante diferentes métodos">{{ event_type.description|default:'' }}</textarea>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="icon" class="form-label">
+                                    Icono (Bootstrap Icons)
+                                    <i class="bi bi-question-circle text-muted" 
+                                       data-bs-toggle="tooltip" 
+                                       title="Nombre del icono sin el prefijo 'bi-'"></i>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="bi bi-{{ event_type.icon|default:'calendar-event' }}" id="iconPreview"></i>
+                                    </span>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="icon" 
+                                           name="icon" 
+                                           value="{{ event_type.icon|default:'calendar-event' }}"
+                                           placeholder="calendar-event">
+                                </div>
+                                <small class="text-muted">
+                                    Ver iconos en: 
+                                    <a href="https://icons.getbootstrap.com/" target="_blank">Bootstrap Icons</a>
+                                </small>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="color" class="form-label">
+                                    Color (Hexadecimal)
+                                </label>
+                                <div class="input-group">
+                                    <input type="color" 
+                                           class="form-control form-control-color" 
+                                           id="colorPicker" 
+                                           value="{{ event_type.color|default:'#6c757d' }}"
+                                           style="max-width: 60px;">
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="color" 
+                                           name="color" 
+                                           value="{{ event_type.color|default:'#6c757d' }}"
+                                           pattern="^#[0-9A-Fa-f]{6}$"
+                                           placeholder="#6c757d">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" 
+                                       type="checkbox" 
+                                       id="is_active" 
+                                       name="is_active"
+                                       {% if event_type.is_active %}checked{% endif %}>
+                                <label class="form-check-label" for="is_active">
+                                    Tipo de evento activo (disponible para crear eventos)
+                                </label>
+                            </div>
                         </div>
                     </div>
 
+                    <!-- Buttons -->
                     <div class="d-flex gap-2">
-                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="validateSchema()">
-                            <i class="bi bi-check-circle"></i> Validar JSON
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check-circle"></i> Guardar Cambios
                         </button>
-                        <button type="button" class="btn btn-outline-info btn-sm" onclick="formatSchema()">
-                            <i class="bi bi-code"></i> Formatear JSON
-                        </button>
-                        <button type="button" class="btn btn-outline-warning btn-sm" onclick="showExample()">
-                            <i class="bi bi-lightbulb"></i> Ver Ejemplo
-                        </button>
+                        <a href="{% url 'event_type_list' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle"></i> Cancelar
+                        </a>
                     </div>
-                </div>
-
-                <!-- Buttons -->
-                <div class="d-flex gap-2">
-                    <button type="submit" class="btn btn-success">
-                        <i class="bi bi-check-circle"></i> {{ action }} Tipo de Evento
-                    </button>
-                    <a href="{% url 'event_type_list' %}" class="btn btn-outline-secondary">
-                        <i class="bi bi-x-circle"></i> Cancelar
-                    </a>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Ayuda sobre JSON Schema -->
-    <div class="card mt-4 border-info">
-        <div class="card-header bg-info text-white">
-            <i class="bi bi-book"></i> Guía Rápida de JSON Schema
-        </div>
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-6">
-                    <h6>Tipos de datos soportados:</h6>
-                    <ul class="small">
-                        <li><code>"type": "string"</code> - Texto</li>
-                        <li><code>"type": "number"</code> - Número decimal</li>
-                        <li><code>"type": "integer"</code> - Número entero</li>
-                        <li><code>"type": "boolean"</code> - Verdadero/Falso</li>
-                        <li><code>"type": "array"</code> - Lista de valores</li>
-                        <li><code>"type": "object"</code> - Objeto JSON</li>
-                    </ul>
-                </div>
-                <div class="col-md-6">
-                    <h6>Validaciones comunes:</h6>
-                    <ul class="small">
-                        <li><code>"required": ["campo1", "campo2"]</code> - Campos obligatorios</li>
-                        <li><code>"minimum": 0, "maximum": 100</code> - Rango numérico</li>
-                        <li><code>"minLength": 5, "maxLength": 200</code> - Longitud de texto</li>
-                        <li><code>"enum": ["Opción1", "Opción2"]</code> - Lista de opciones</li>
-                        <li><code>"pattern": "^[A-Z]"</code> - Expresión regular</li>
-                    </ul>
-                </div>
-            </div>
+                </form>
+            {% endif %}
         </div>
     </div>
 </div>
 
 <script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Sincronizar color picker con input de texto
+    const colorPicker = document.getElementById('colorPicker');
+    const colorInput = document.getElementById('color');
+    
+    if (colorPicker && colorInput) {
+        colorPicker.addEventListener('input', function() {
+            colorInput.value = colorPicker.value;
+        });
+        
+        colorInput.addEventListener('input', function() {
+            if (/^#[0-9A-Fa-f]{6}$/.test(colorInput.value)) {
+                colorPicker.value = colorInput.value;
+            }
+        });
+    }
+    
+    // Actualizar preview del icono
+    const iconInput = document.getElementById('icon');
+    const iconPreview = document.getElementById('iconPreview');
+    
+    if (iconInput && iconPreview) {
+        iconInput.addEventListener('input', function() {
+            const iconName = iconInput.value || 'calendar-event';
+            iconPreview.className = `bi bi-${iconName}`;
+        });
+    }
+    
     // Inicializar tooltips
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl);
     });
-
-    // Actualizar preview del icono
-    document.getElementById('icon').addEventListener('input', function() {
-        const iconPreview = document.getElementById('iconPreview');
-        iconPreview.className = `bi bi-${this.value}`;
-    });
-
-    // Sincronizar color picker con input de texto
-    document.getElementById('colorPicker').addEventListener('input', function() {
-        document.getElementById('color').value = this.value;
-    });
-
-    document.getElementById('color').addEventListener('input', function() {
-        document.getElementById('colorPicker').value = this.value;
-    });
-
-    // Validar JSON Schema
-    function validateSchema() {
-        const schemaText = document.getElementById('schema').value;
-        try {
-            const schema = JSON.parse(schemaText);
-            alert('✓ El JSON es válido');
-            return true;
-        } catch (e) {
-            alert('✗ Error en el JSON:\n' + e.message);
-            return false;
-        }
-    }
-
-    // Formatear JSON
-    function formatSchema() {
-        const schemaText = document.getElementById('schema').value;
-        try {
-            const schema = JSON.parse(schemaText);
-            document.getElementById('schema').value = JSON.stringify(schema, null, 2);
-            alert('✓ JSON formateado correctamente');
-        } catch (e) {
-            alert('✗ Error: El JSON no es válido\n' + e.message);
-        }
-    }
-
-    // Mostrar ejemplo
-    function showExample() {
-        if (confirm('¿Reemplazar el contenido actual con un ejemplo?')) {
-            const example = {{ example_schema|safe }};
-            document.getElementById('schema').value = JSON.stringify(example, null, 2);
-        }
-    }
-
-    // Validar antes de enviar
-    document.getElementById('eventTypeForm').addEventListener('submit', function(e) {
-        if (!validateSchema()) {
-            e.preventDefault();
-        }
-    });
+});
 </script>
 {% endblock %}

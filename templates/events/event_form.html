@@ -5,7 +5,7 @@
 {% block description %}Formulario para registrar nuevos eventos en el sistema de trazabilidad agrícola del cultivo de limón.{% endblock %}
 
 {% block content %}
-<div class="container py-4" style="max-width: 900px;">
+<div class="container py-4" style="max-width: 1000px;">
     <!-- Breadcrumb -->
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
@@ -28,11 +28,10 @@
         <div class="d-flex align-items-start">
             <i class="bi bi-lightbulb-fill text-success me-2 flex-shrink-0" style="font-size: 1.1rem;"></i>
             <div class="flex-grow-1">
-                <h6 class="mb-1">Registro Dinámico de Eventos</h6>
+                <h6 class="mb-1">Registro de Eventos</h6>
                 <p class="mb-0 small text-muted">
-                    Selecciona el tipo de evento para que el formulario se adapte automáticamente
-                    con los campos específicos requeridos. Cada tipo de evento tiene un esquema
-                    personalizado para capturar los datos necesarios.
+                    Selecciona el tipo de evento para que el formulario muestre los campos específicos requeridos.
+                    Cada tipo de evento tiene campos predefinidos para capturar los datos necesarios.
                 </p>
             </div>
         </div>
@@ -41,31 +40,28 @@
     <!-- Form -->
     <div class="card">
         <div class="card-body">
-            <form method="post" id="eventForm">
-                {% csrf_token %}
-                
-                <!-- Información Básica -->
-                <div class="mb-4">
-                    <h5 class="border-bottom pb-2 mb-3">
-                        <i class="bi bi-info-circle"></i> Información Básica
-                    </h5>
-                    
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
+            {% if not event_type %}
+                <!-- Selector de tipo de evento -->
+                <form method="get" id="eventTypeSelector">
+                    <div class="mb-4">
+                        <h5 class="border-bottom pb-2 mb-3">
+                            <i class="bi bi-list-ul"></i> Seleccionar Tipo de Evento
+                        </h5>
+                        
+                        <div class="mb-3">
                             <label for="event_type" class="form-label">
                                 Tipo de Evento <span class="text-danger">*</span>
                                 <i class="bi bi-question-circle text-muted" 
                                    data-bs-toggle="tooltip" 
                                    title="Selecciona el tipo de actividad que vas a registrar"></i>
                             </label>
-                            <select class="form-select" id="event_type" name="event_type" required>
-                                <option value="">-- Seleccionar --</option>
+                            <select class="form-select form-select-lg" id="event_type" name="event_type" required>
+                                <option value="">-- Seleccionar tipo de evento --</option>
                                 {% regroup event_types by get_category_display as category_list %}
                                 {% for category in category_list %}
                                     <optgroup label="{{ category.grouper }}">
                                         {% for et in category.list %}
                                             <option value="{{ et.id }}" 
-                                                    data-schema='{{ et.schema_json }}'
                                                     data-icon="{{ et.icon }}"
                                                     data-color="{{ et.color }}">
                                                 {{ et.name }}
@@ -74,233 +70,291 @@
                                     </optgroup>
                                 {% endfor %}
                             </select>
+                            {% if event_types %}
+                                <div class="form-text">Selecciona un tipo de evento para continuar</div>
+                            {% else %}
+                                <div class="alert alert-warning mt-2">
+                                    <i class="bi bi-exclamation-triangle"></i> 
+                                    No hay tipos de eventos disponibles. Ejecuta: <code>python manage.py setup_event_types</code>
+                                </div>
+                            {% endif %}
                         </div>
-                        
-                        <div class="col-md-6 mb-3">
-                            <label for="timestamp" class="form-label">
-                                Fecha y Hora <span class="text-danger">*</span>
-                                <i class="bi bi-question-circle text-muted" 
-                                   data-bs-toggle="tooltip" 
-                                   title="Momento en que ocurrió el evento"></i>
-                            </label>
-                            <input type="datetime-local" class="form-control" id="timestamp" name="timestamp" required>
-                        </div>
-                    </div>
 
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="field" class="form-label">
-                                Campo <span class="text-danger">*</span>
-                                <i class="bi bi-question-circle text-muted" 
-                                   data-bs-toggle="tooltip" 
-                                   title="Parcela o terreno donde ocurrió el evento"></i>
-                            </label>
-                            <select class="form-select" id="field" name="field" required>
-                                <option value="">-- Seleccionar --</option>
-                                {% for field in fields %}
-                                    <option value="{{ field.id }}">{{ field.name }} ({{ field.code }})</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        
-                        <div class="col-md-6 mb-3">
-                            <label for="campaign" class="form-label">
-                                Campaña (opcional)
-                                <i class="bi bi-question-circle text-muted" 
-                                   data-bs-toggle="tooltip" 
-                                   title="Campaña de cultivo asociada al evento"></i>
-                            </label>
-                            <select class="form-select" id="campaign" name="campaign">
-                                <option value="">-- Sin campaña --</option>
-                                {% for campaign in campaigns %}
-                                    <option value="{{ campaign.id }}">
-                                        {{ campaign.name }} - {{ campaign.season }}
-                                    </option>
-                                {% endfor %}
-                            </select>
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-arrow-right-circle"></i> Continuar
+                            </button>
+                            <a href="{% url 'event_list' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle"></i> Cancelar
+                            </a>
                         </div>
                     </div>
-                </div>
+                </form>
+            {% else %}
+                <!-- Formulario específico del tipo de evento -->
+                {% if form %}
+                    <form method="post" id="eventForm">
+                        {% csrf_token %}
+                        
+                        <!-- Información Básica -->
+                        <div class="mb-4">
+                            <h5 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-info-circle"></i> Información Básica
+                            </h5>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.event_type.id_for_label }}" class="form-label">
+                                        Tipo de Evento <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.event_type }}
+                                    {% if form.event_type.errors %}
+                                        <div class="text-danger small">{{ form.event_type.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.timestamp.id_for_label }}" class="form-label">
+                                        Fecha y Hora <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.timestamp }}
+                                    {% if form.timestamp.errors %}
+                                        <div class="text-danger small">{{ form.timestamp.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
 
-                <!-- Datos Dinámicos del Evento -->
-                <div class="mb-4" id="dynamicFieldsContainer" style="display: none;">
-                    <h5 class="border-bottom pb-2 mb-3">
-                        <i class="bi bi-list-task"></i> Datos Específicos del Evento
-                    </h5>
-                    <div id="dynamicFields"></div>
-                </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.field.id_for_label }}" class="form-label">
+                                        Campo <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.field }}
+                                    {% if form.field.errors %}
+                                        <div class="text-danger small">{{ form.field.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.campaign.id_for_label }}" class="form-label">
+                                        Campaña (opcional)
+                                    </label>
+                                    {{ form.campaign }}
+                                    {% if form.campaign.errors %}
+                                        <div class="text-danger small">{{ form.campaign.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
 
-                <!-- Observaciones -->
-                <div class="mb-4">
-                    <label for="observations" class="form-label">
-                        Observaciones
-                        <i class="bi bi-question-circle text-muted" 
-                           data-bs-toggle="tooltip" 
-                           title="Notas adicionales sobre el evento"></i>
-                    </label>
-                    <textarea class="form-control" id="observations" name="observations" rows="4"
-                              placeholder="Ej: Condiciones climáticas, personal involucrado, resultados observados..."></textarea>
-                    <div class="form-text">Información adicional relevante</div>
-                </div>
+                        <!-- Campos Específicos del Tipo de Evento -->
+                        <div class="mb-4">
+                            <h5 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-list-task"></i> Datos Específicos del Evento
+                            </h5>
+                            
+                            {% if event_type.name == 'Aplicación de Riego' %}
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="{{ form.metodo.id_for_label }}" class="form-label">Método de Riego <span class="text-danger">*</span></label>
+                                        {{ form.metodo }}
+                                        {% if form.metodo.errors %}<div class="text-danger small">{{ form.metodo.errors }}</div>{% endif %}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="{{ form.duracion_minutos.id_for_label }}" class="form-label">Duración (minutos) <span class="text-danger">*</span></label>
+                                        {{ form.duracion_minutos }}
+                                        {% if form.duracion_minutos.errors %}<div class="text-danger small">{{ form.duracion_minutos.errors }}</div>{% endif %}
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="{{ form.fuente_agua.id_for_label }}" class="form-label">Fuente de Agua <span class="text-danger">*</span></label>
+                                        {{ form.fuente_agua }}
+                                        {% if form.fuente_agua.errors %}<div class="text-danger small">{{ form.fuente_agua.errors }}</div>{% endif %}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="{{ form.volumen_m3.id_for_label }}" class="form-label">Volumen (m³)</label>
+                                        {{ form.volumen_m3 }}
+                                        {% if form.volumen_m3.errors %}<div class="text-danger small">{{ form.volumen_m3.errors }}</div>{% endif %}
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-4 mb-3">
+                                        <label for="{{ form.presion_bar.id_for_label }}" class="form-label">Presión (bar)</label>
+                                        {{ form.presion_bar }}
+                                        {% if form.presion_bar.errors %}<div class="text-danger small">{{ form.presion_bar.errors }}</div>{% endif %}
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label for="{{ form.ce_uScm.id_for_label }}" class="form-label">CE (µS/cm)</label>
+                                        {{ form.ce_uScm }}
+                                        {% if form.ce_uScm.errors %}<div class="text-danger small">{{ form.ce_uScm.errors }}</div>{% endif %}
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label for="{{ form.ph.id_for_label }}" class="form-label">pH</label>
+                                        {{ form.ph }}
+                                        {% if form.ph.errors %}<div class="text-danger small">{{ form.ph.errors }}</div>{% endif %}
+                                    </div>
+                                </div>
+                            
+                            {% elif event_type.name == 'Mano de Obra y Costos' %}
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="{{ form.actividad.id_for_label }}" class="form-label">Actividad <span class="text-danger">*</span></label>
+                                        {{ form.actividad }}
+                                        {% if form.actividad.errors %}<div class="text-danger small">{{ form.actividad.errors }}</div>{% endif %}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="{{ form.numero_trabajadores.id_for_label }}" class="form-label">Número de Trabajadores <span class="text-danger">*</span></label>
+                                        {{ form.numero_trabajadores }}
+                                        {% if form.numero_trabajadores.errors %}<div class="text-danger small">{{ form.numero_trabajadores.errors }}</div>{% endif %}
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="{{ form.horas_trabajo.id_for_label }}" class="form-label">Horas de Trabajo</label>
+                                        {{ form.horas_trabajo }}
+                                        {% if form.horas_trabajo.errors %}<div class="text-danger small">{{ form.horas_trabajo.errors }}</div>{% endif %}
+                                        <div class="form-text">Si proporciona horas y costo por hora, el costo total se calculará automáticamente</div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="{{ form.costo_hora.id_for_label }}" class="form-label">Costo por Hora</label>
+                                        {{ form.costo_hora }}
+                                        {% if form.costo_hora.errors %}<div class="text-danger small">{{ form.costo_hora.errors }}</div>{% endif %}
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="{{ form.costo_total.id_for_label }}" class="form-label">Costo Total <span class="text-danger">*</span></label>
+                                        {{ form.costo_total }}
+                                        {% if form.costo_total.errors %}<div class="text-danger small">{{ form.costo_total.errors }}</div>{% endif %}
+                                        <div class="form-text">Se calculará automáticamente si proporciona horas y costo por hora</div>
+                                    </div>
+                                </div>
+                            
+                            {% else %}
+                                <!-- Renderizar campos del formulario automáticamente -->
+                                {% for field in form %}
+                                    {% if field.name not in 'event_type,field,campaign,timestamp,observations' %}
+                                        <div class="mb-3">
+                                            <label for="{{ field.id_for_label }}" class="form-label">
+                                                {{ field.label }}
+                                                {% if field.field.required %}<span class="text-danger">*</span>{% endif %}
+                                            </label>
+                                            {{ field }}
+                                            {% if field.errors %}
+                                                <div class="text-danger small">{{ field.errors }}</div>
+                                            {% endif %}
+                                            {% if field.help_text %}
+                                                <div class="form-text">{{ field.help_text }}</div>
+                                            {% endif %}
+                                        </div>
+                                    {% endif %}
+                                {% endfor %}
+                            {% endif %}
+                        </div>
 
-                <!-- Buttons -->
-                <div class="d-flex gap-2">
-                    <button type="submit" class="btn btn-success">
-                        <i class="bi bi-check-circle"></i> Registrar Evento
-                    </button>
-                    <a href="{% url 'event_list' %}" class="btn btn-outline-secondary">
-                        <i class="bi bi-x-circle"></i> Cancelar
-                    </a>
-                </div>
-            </form>
+                        <!-- Observaciones -->
+                        <div class="mb-4">
+                            <label for="{{ form.observations.id_for_label }}" class="form-label">
+                                Observaciones
+                            </label>
+                            {{ form.observations }}
+                            {% if form.observations.errors %}
+                                <div class="text-danger small">{{ form.observations.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Errores generales del formulario -->
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {{ form.non_field_errors }}
+                            </div>
+                        {% endif %}
+
+                        <!-- Buttons -->
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-check-circle"></i> Registrar Evento
+                            </button>
+                            <a href="{% url 'event_list' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle"></i> Cancelar
+                            </a>
+                            <a href="{% url 'event_create' %}" class="btn btn-outline-primary">
+                                <i class="bi bi-arrow-left"></i> Cambiar Tipo
+                            </a>
+                        </div>
+                    </form>
+                {% else %}
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        No se encontró formulario para el tipo de evento: <strong>{{ event_type.name }}</strong>
+                    </div>
+                    <a href="{% url 'event_create' %}" class="btn btn-primary">Volver a Seleccionar</a>
+                {% endif %}
+            {% endif %}
         </div>
     </div>
 </div>
 
-<!-- Script para generar campos dinámicos -->
+<!-- Script para autocálculo de costo_total en LaborCostEvent -->
+{% if event_type and event_type.name == 'Mano de Obra y Costos' %}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Inicializar tooltips
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl);
-        });
-
-        // Establecer fecha/hora actual por defecto en hora local
+document.addEventListener('DOMContentLoaded', function() {
+    const horasTrabajo = document.getElementById('id_horas_trabajo');
+    const costoHora = document.getElementById('id_costo_hora');
+    const numeroTrabajadores = document.getElementById('id_numero_trabajadores');
+    const costoTotal = document.getElementById('id_costo_total');
+    
+    function calcularCostoTotal() {
+        if (horasTrabajo && costoHora && numeroTrabajadores && costoTotal) {
+            const horas = parseFloat(horasTrabajo.value) || 0;
+            const costo = parseFloat(costoHora.value) || 0;
+            const trabajadores = parseInt(numeroTrabajadores.value) || 1;
+            
+            if (horas > 0 && costo > 0) {
+                costoTotal.value = (horas * costo * trabajadores).toFixed(2);
+            }
+        }
+    }
+    
+    if (horasTrabajo) horasTrabajo.addEventListener('input', calcularCostoTotal);
+    if (costoHora) costoHora.addEventListener('input', calcularCostoTotal);
+    if (numeroTrabajadores) numeroTrabajadores.addEventListener('input', calcularCostoTotal);
+    
+    // Establecer fecha/hora actual por defecto
+    const timestampField = document.getElementById('id_timestamp');
+    if (timestampField && !timestampField.value) {
         const now = new Date();
-        // Formatear como YYYY-MM-DDTHH:MM para datetime-local
         const year = now.getFullYear();
         const month = String(now.getMonth() + 1).padStart(2, '0');
         const day = String(now.getDate()).padStart(2, '0');
         const hours = String(now.getHours()).padStart(2, '0');
         const minutes = String(now.getMinutes()).padStart(2, '0');
-        document.getElementById('timestamp').value = `${year}-${month}-${day}T${hours}:${minutes}`;
-
-        // Manejar cambio de tipo de evento
-        const eventTypeSelect = document.getElementById('event_type');
-        const dynamicFieldsContainer = document.getElementById('dynamicFieldsContainer');
-        const dynamicFields = document.getElementById('dynamicFields');
-
-        eventTypeSelect.addEventListener('change', function() {
-            const selectedOption = this.options[this.selectedIndex];
-            const schemaText = selectedOption.getAttribute('data-schema');
-            
-            if (schemaText && schemaText !== 'null' && schemaText !== '{}') {
-                try {
-                    const schema = JSON.parse(schemaText);
-                    generateDynamicFields(schema);
-                    dynamicFieldsContainer.style.display = 'block';
-                } catch (e) {
-                    console.error('Error parsing schema:', e);
-                    dynamicFields.innerHTML = '<div class="alert alert-warning">Error al cargar campos dinámicos</div>';
-                }
-            } else {
-                dynamicFieldsContainer.style.display = 'none';
-                dynamicFields.innerHTML = '';
-            }
-        });
-
-        function generateDynamicFields(schema) {
-            dynamicFields.innerHTML = '';
-            
-            if (!schema.properties) {
-                dynamicFields.innerHTML = '<p class="text-muted">No hay campos adicionales para este tipo de evento</p>';
-                return;
-            }
-
-            const properties = schema.properties;
-            const required = schema.required || [];
-
-            for (const [fieldName, fieldSchema] of Object.entries(properties)) {
-                const isRequired = required.includes(fieldName);
-                const fieldHtml = createFormField(fieldName, fieldSchema, isRequired);
-                dynamicFields.innerHTML += fieldHtml;
-            }
-        }
-
-        function createFormField(name, schema, required) {
-            const fieldId = `payload_${name}`;
-            const label = schema.title || name;
-            const description = schema.description || '';
-            const type = schema.type || 'string';
-            
-            let inputHtml = '';
-            
-            switch (type) {
-                case 'number':
-                case 'integer':
-                    inputHtml = `
-                        <input type="number" 
-                               class="form-control" 
-                               id="${fieldId}" 
-                               name="${fieldId}"
-                               ${schema.minimum !== undefined ? `min="${schema.minimum}"` : ''}
-                               ${schema.maximum !== undefined ? `max="${schema.maximum}"` : ''}
-                               ${required ? 'required' : ''}
-                               placeholder="${schema.example || ''}">
-                    `;
-                    break;
-                case 'boolean':
-                    inputHtml = `
-                        <div class="form-check">
-                            <input type="checkbox" class="form-check-input" id="${fieldId}" name="${fieldId}" value="true">
-                            <label class="form-check-label" for="${fieldId}">Sí</label>
-                        </div>
-                    `;
-                    break;
-                case 'array':
-                    inputHtml = `
-                        <textarea class="form-control" 
-                                  id="${fieldId}" 
-                                  name="${fieldId}" 
-                                  rows="3" 
-                                  ${required ? 'required' : ''}
-                                  placeholder='["valor1", "valor2"]'></textarea>
-                        <small class="text-muted">Ingresa un array JSON</small>
-                    `;
-                    break;
-                case 'object':
-                    inputHtml = `
-                        <textarea class="form-control" 
-                                  id="${fieldId}" 
-                                  name="${fieldId}" 
-                                  rows="3" 
-                                  ${required ? 'required' : ''}
-                                  placeholder='{"clave": "valor"}'></textarea>
-                        <small class="text-muted">Ingresa un objeto JSON</small>
-                    `;
-                    break;
-                default: // string
-                    if (schema.enum) {
-                        inputHtml = `
-                            <select class="form-select" id="${fieldId}" name="${fieldId}" ${required ? 'required' : ''}>
-                                <option value="">-- Seleccionar --</option>
-                                ${schema.enum.map(opt => `<option value="${opt}">${opt}</option>`).join('')}
-                            </select>
-                        `;
-                    } else {
-                        inputHtml = `
-                            <input type="text" 
-                                   class="form-control" 
-                                   id="${fieldId}" 
-                                   name="${fieldId}"
-                                   ${schema.maxLength ? `maxlength="${schema.maxLength}"` : ''}
-                                   ${required ? 'required' : ''}
-                                   placeholder="${schema.example || ''}">
-                        `;
-                    }
-            }
-
-            return `
-                <div class="mb-3">
-                    <label for="${fieldId}" class="form-label">
-                        ${label} ${required ? '<span class="text-danger">*</span>' : ''}
-                    </label>
-                    ${inputHtml}
-                    ${description ? `<div class="form-text">${description}</div>` : ''}
-                </div>
-            `;
-        }
-    });
+        timestampField.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+    }
+});
 </script>
+{% else %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Establecer fecha/hora actual por defecto
+    const timestampField = document.getElementById('id_timestamp');
+    if (timestampField && !timestampField.value) {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        timestampField.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+    }
+    
+    // Inicializar tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+{% endif %}
 {% endblock %}
