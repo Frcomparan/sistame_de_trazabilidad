@@ -21,9 +21,6 @@
             <i class="bi bi-grid-3x3-gap-fill text-success"></i>
             Tipos de Eventos
         </h2>
-        <a href="{% url 'event_type_create' %}" class="btn btn-success">
-            <i class="bi bi-plus-circle"></i> Crear Tipo de Evento
-        </a>
     </div>
 
     <!-- Info Alert -->
@@ -34,7 +31,6 @@
                 <h6 class="mb-1">Gestión de Tipos de Eventos</h6>
                 <p class="mb-0 small text-muted">
                     Los tipos de eventos definen las categorías de actividades que se pueden registrar.
-                    Cada tipo tiene un esquema JSON personalizado que determina qué campos se capturan.
                 </p>
             </div>
         </div>
@@ -137,20 +133,19 @@
                                 {% endif %}
                             </td>
                             <td class="text-end">
-                                <div class="btn-group btn-group-sm" role="group">
-                                    <a href="{% url 'event_type_edit' et.id %}" 
-                                       class="btn btn-outline-primary" 
-                                       data-bs-toggle="tooltip" 
-                                       title="Editar">
-                                        <i class="bi bi-pencil"></i>
-                                    </a>
-                                    <a href="{% url 'event_type_delete' et.id %}" 
-                                       class="btn btn-outline-danger" 
-                                       data-bs-toggle="tooltip" 
-                                       title="Eliminar">
-                                        <i class="bi bi-trash"></i>
-                                    </a>
-                                </div>
+                                <form method="POST" action="{% url 'event_type_toggle' et.id %}" style="display: inline;">
+                                    {% csrf_token %}
+                                    <div class="form-check form-switch d-flex justify-content-end">
+                                        <input class="form-check-input" 
+                                               type="checkbox" 
+                                               role="switch" 
+                                               id="switch-{{ et.id }}"
+                                               {% if et.is_active %}checked{% endif %}
+                                               onchange="this.form.submit()"
+                                               data-bs-toggle="tooltip"
+                                               title="{% if et.is_active %}Desactivar{% else %}Activar{% endif %} tipo de evento">
+                                    </div>
+                                </form>
                             </td>
                         </tr>
                         {% empty %}
@@ -158,9 +153,6 @@
                             <td colspan="6" class="text-center text-muted py-4">
                                 <i class="bi bi-inbox" style="font-size: 3rem;"></i>
                                 <p class="mt-2">No hay tipos de eventos registrados.</p>
-                                <a href="{% url 'event_type_create' %}" class="btn btn-success">
-                                    <i class="bi bi-plus-circle"></i> Crear el Primer Tipo
-                                </a>
                             </td>
                         </tr>
                         {% endfor %}
@@ -179,24 +171,43 @@
             <h6>¿Qué es un Tipo de Evento?</h6>
             <p class="small mb-2">
                 Un tipo de evento define una categoría de actividad agrícola (riego, fertilización, cosecha, etc.) 
-                y especifica qué datos se deben capturar mediante un esquema JSON.
+                que se puede registrar en el sistema de trazabilidad.
             </p>
             
-            <h6 class="mt-3">Esquema JSON</h6>
+            <h6 class="mt-3">Tipos de Eventos Predefinidos</h6>
             <p class="small mb-2">
-                El esquema JSON define los campos personalizados de cada tipo de evento. Por ejemplo, 
-                un evento de "Riego" puede tener campos para duración, caudal y presión, mientras que 
-                un evento de "Cosecha" tendría campos para cantidad, calidad y destino.
+                El sistema incluye 10 tipos de eventos predefinidos que cubren las actividades más importantes
+                del ciclo productivo del limón. Estos tipos no se pueden crear, editar o eliminar, pero
+                se pueden activar o desactivar según las necesidades.
             </p>
             
-            <h6 class="mt-3">¿Puedo modificar tipos de eventos existentes?</h6>
+            <h6 class="mt-3">¿Cómo activar o desactivar un tipo de evento?</h6>
             <p class="small mb-0">
-                Sí, pero ten cuidado al modificar el esquema de tipos que ya tienen eventos registrados.
-                Los cambios en el esquema no afectan eventos existentes, pero podrían causar inconsistencias.
+                Usa el interruptor (switch) en la columna "Acciones" para activar o desactivar un tipo de evento.
+                Los tipos inactivos no aparecerán disponibles al momento de registrar nuevos eventos.
             </p>
         </div>
     </div>
 </div>
+
+<style>
+    /* Estilo mejorado para el switch de activar/desactivar */
+    .form-check-input {
+        width: 3em;
+        height: 1.5em;
+        cursor: pointer;
+    }
+    
+    .form-check-input:checked {
+        background-color: #198754;
+        border-color: #198754;
+    }
+    
+    .form-check-input:focus {
+        border-color: #86b7fe;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+</style>
 
 <script>
     // Inicializar tooltips

@@ -188,30 +188,6 @@
                                     {% if event.costo_hora %}<tr><th class="text-muted">Costo por Hora</th><td>${{ event.costo_hora }}</td></tr>{% endif %}
                                     <tr><th class="text-muted">Costo Total</th><td><strong>${{ event.costo_total }}</strong></td></tr>
                                 
-                                {% else %}
-                                    <!-- Fallback: mostrar todos los campos disponibles del modelo -->
-                                    {% for field in event._meta.get_fields %}
-                                        {% if field.name not in 'id,event_type,field,campaign,timestamp,observations,created_by,created_at,updated_at' %}
-                                            {% if field.value_from_object %}
-                                                <tr>
-                                                    <th class="text-muted">{{ field.verbose_name|title }}</th>
-                                                    <td>
-                                                        {% with value=field.value_from_object|default:"" %}
-                                                            {% if value == True %}
-                                            <i class="bi bi-check-circle-fill text-success"></i> Sí
-                                        {% elif value == False %}
-                                            <i class="bi bi-x-circle-fill text-danger"></i> No
-                                                            {% elif value %}
-                                                                {{ value }}
-                                        {% else %}
-                                                                <span class="text-muted fst-italic">Sin datos</span>
-                                                            {% endif %}
-                                                        {% endwith %}
-                                                    </td>
-                                                </tr>
-                                            {% endif %}
-                                        {% endif %}
-                                {% endfor %}
                                 {% endif %}
                             </tbody>
                         </table>

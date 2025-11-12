@@ -477,3 +477,17 @@ def event_type_delete_view(request, pk):
     return render(request, 'events/event_type_confirm_delete.html', context)
 
 
+@login_required
+def event_type_toggle_view(request, pk):
+    """Vista para activar/desactivar un tipo de evento."""
+    event_type = get_object_or_404(EventType, pk=pk)
+    
+    if request.method == 'POST':
+        event_type.is_active = not event_type.is_active
+        event_type.save()
+        
+        status = "activado" if event_type.is_active else "desactivado"
+        messages.success(request, f'Tipo de evento "{event_type.name}" {status} exitosamente.')
+        return redirect('event_type_list')
+    
+    return redirect('event_type_list')

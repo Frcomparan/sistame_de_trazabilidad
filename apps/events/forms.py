@@ -26,17 +26,39 @@ class BaseEventForm(forms.ModelForm):
         model = Event
         fields = ['event_type', 'field', 'campaign', 'timestamp', 'observations']
         widgets = {
-            'event_type': forms.Select(attrs={'class': 'form-select'}),
-            'field': forms.Select(attrs={'class': 'form-select'}),
-            'campaign': forms.Select(attrs={'class': 'form-select'}),
+            'event_type': forms.Select(attrs={
+                'class': 'form-select',
+            }),
+            'field': forms.Select(attrs={
+                'class': 'form-select',
+            }),
+            'campaign': forms.Select(attrs={
+                'class': 'form-select',
+            }),
             'timestamp': forms.DateTimeInput(attrs={
                 'type': 'datetime-local',
-                'class': 'form-control'
+                'class': 'form-control',
+                'placeholder': '2025-11-12 14:30'
             }),
             'observations': forms.Textarea(attrs={
                 'class': 'form-control',
-                'rows': 3
+                'rows': 3,
+                'placeholder': 'Observaciones adicionales sobre el evento (opcional)'
             }),
+        }
+        labels = {
+            'event_type': 'Tipo de Evento',
+            'field': 'Campo',
+            'campaign': 'Campaña',
+            'timestamp': 'Fecha y Hora',
+            'observations': 'Observaciones',
+        }
+        help_texts = {
+            'event_type': 'Seleccione el tipo de evento a registrar',
+            'field': 'Campo donde se realizó la actividad',
+            'campaign': 'Campaña asociada (opcional)',
+            'timestamp': 'Fecha y hora en que ocurrió el evento',
+            'observations': 'Notas o comentarios adicionales',
         }
 
 
@@ -54,31 +76,54 @@ class IrrigationEventForm(BaseEventForm):
             'metodo': forms.Select(attrs={'class': 'form-select'}),
             'duracion_minutos': forms.NumberInput(attrs={
                 'class': 'form-control',
-                'min': 1
+                'min': 1,
+                'placeholder': 'Ej: 120'
             }),
             'fuente_agua': forms.Select(attrs={'class': 'form-select'}),
             'volumen_m3': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.01',
-                'min': 0
+                'min': 0,
+                'placeholder': 'Ej: 50.5'
             }),
             'presion_bar': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.01',
                 'min': 0,
-                'max': 10
+                'max': 10,
+                'placeholder': 'Ej: 1.5'
             }),
             'ce_uScm': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.01',
-                'min': 0
+                'min': 0,
+                'placeholder': 'Ej: 1200'
             }),
             'ph': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.01',
                 'min': 0,
-                'max': 14
+                'max': 14,
+                'placeholder': 'Ej: 7.2'
             }),
+        }
+        labels = {
+            **BaseEventForm.Meta.labels,
+            'metodo': 'Método de Riego',
+            'duracion_minutos': 'Duración (minutos)',
+            'fuente_agua': 'Fuente de Agua',
+            'volumen_m3': 'Volumen (m³)',
+            'presion_bar': 'Presión (bar)',
+            'ce_uScm': 'Conductividad Eléctrica (µS/cm)',
+            'ph': 'pH del Agua',
+        }
+        help_texts = {
+            **BaseEventForm.Meta.help_texts,
+            'duracion_minutos': 'Tiempo total de riego en minutos',
+            'volumen_m3': 'Volumen total de agua aplicado en metros cúbicos',
+            'presion_bar': 'Presión del sistema de riego',
+            'ce_uScm': 'Conductividad eléctrica del agua de riego',
+            'ph': 'Nivel de pH del agua de riego',
         }
 
 
@@ -93,37 +138,69 @@ class FertilizationEventForm(BaseEventForm):
         ]
         widgets = {
             **BaseEventForm.Meta.widgets,
-            'producto': forms.TextInput(attrs={'class': 'form-control'}),
+            'producto': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ej: Nitrofoska 15-15-15'
+            }),
             'metodo_aplicacion': forms.Select(attrs={'class': 'form-select'}),
             'dosis': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.01',
-                'min': 0
+                'min': 0,
+                'placeholder': 'Ej: 3.5'
             }),
-            'unidad_dosis': forms.TextInput(attrs={'class': 'form-control'}),
+            'unidad_dosis': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ej: kg/ha, L/ha'
+            }),
             'n_porcentaje': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.01',
                 'min': 0,
-                'max': 100
+                'max': 100,
+                'placeholder': 'Ej: 15'
             }),
             'p_porcentaje': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.01',
                 'min': 0,
-                'max': 100
+                'max': 100,
+                'placeholder': 'Ej: 15'
             }),
             'k_porcentaje': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.01',
                 'min': 0,
-                'max': 100
+                'max': 100,
+                'placeholder': 'Ej: 15'
             }),
             'volumen_caldo_l': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.01',
-                'min': 0
+                'min': 0,
+                'placeholder': 'Ej: 500'
             }),
+        }
+        labels = {
+            **BaseEventForm.Meta.labels,
+            'producto': 'Producto Fertilizante',
+            'metodo_aplicacion': 'Método de Aplicación',
+            'dosis': 'Dosis',
+            'unidad_dosis': 'Unidad de Dosis',
+            'n_porcentaje': 'Nitrógeno (N) %',
+            'p_porcentaje': 'Fósforo (P) %',
+            'k_porcentaje': 'Potasio (K) %',
+            'volumen_caldo_l': 'Volumen de Caldo (L)',
+        }
+        help_texts = {
+            **BaseEventForm.Meta.help_texts,
+            'producto': 'Nombre comercial del fertilizante',
+            'dosis': 'Cantidad de producto aplicado',
+            'unidad_dosis': 'Unidad de medida de la dosis (kg/ha, L/ha, etc.)',
+            'n_porcentaje': 'Porcentaje de nitrógeno en el producto',
+            'p_porcentaje': 'Porcentaje de fósforo en el producto',
+            'k_porcentaje': 'Porcentaje de potasio en el producto',
+            'volumen_caldo_l': 'Volumen total de solución aplicada',
         }
 
 

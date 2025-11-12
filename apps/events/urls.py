@@ -11,6 +11,7 @@ from .views import (
     event_type_create_view,
     event_type_edit_view,
     event_type_delete_view,
+    event_type_toggle_view,
 )
 
 urlpatterns = [
@@ -25,5 +26,6 @@ urlpatterns = [
     path('types/create/', event_type_create_view, name='event_type_create'),
     path('types/<int:pk>/edit/', event_type_edit_view, name='event_type_edit'),
     path('types/<int:pk>/delete/', event_type_delete_view, name='event_type_delete'),
+    path('types/<int:pk>/toggle/', event_type_toggle_view, name='event_type_toggle'),
 ]
 
