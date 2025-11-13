@@ -54,6 +54,14 @@
 
 {% block content %}
 <div class="container-fluid px-4 py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Inicio</a></li>
+            <li class="breadcrumb-item active">Reportes</li>
+        </ol>
+    </nav>
+
     <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
@@ -62,6 +70,22 @@
                 {{ page_title }}
             </h1>
             <p class="text-muted">Genera reportes, visualiza estadísticas y exporta datos del sistema</p>
+        </div>
+    </div>
+
+    <!-- Info Alert -->
+    <div class="alert alert-info alert-dismissible fade show border-0 shadow-sm mb-4" role="alert">
+        <div class="d-flex align-items-start">
+            <i class="bi bi-info-circle-fill me-2 flex-shrink-0" style="font-size: 1.2rem;"></i>
+            <div class="flex-grow-1">
+                <h6 class="alert-heading mb-1">¿Qué son los Reportes?</h6>
+                <p class="mb-0 small">
+                    Los <strong>Reportes</strong> permiten generar documentos consolidados con información detallada 
+                    sobre la trazabilidad de los cultivos. Puede exportar datos por lote individual o por campaña completa, 
+                    en diferentes formatos (PDF, Excel, CSV) según sus necesidades de análisis, auditoría o certificación.
+                </p>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     </div>
     
@@ -100,144 +124,9 @@
                             Vista consolidada de todos los lotes en una campaña.
                             Comparativa, indicadores y análisis de rendimiento.
                         </p>
-                        <button class="btn btn-outline-secondary btn-lg" disabled>
-                            <i class="bi bi-tools"></i> Próximamente
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Reportes Analíticos -->
-    <div class="mb-5">
-        <h2 class="section-title">
-            <i class="bi bi-graph-up"></i> Reportes Analíticos
-        </h2>
-        <div class="row g-4">
-            <div class="col-md-4">
-                <div class="card report-card">
-                    <div class="card-body text-center p-4">
-                        <div class="report-icon">
-                            <i class="bi bi-droplet text-info"></i>
-                        </div>
-                        <h3 class="h5 mb-3">Balance Hídrico</h3>
-                        <p class="text-muted mb-4">
-                            Análisis del consumo de agua y eficiencia de riego.
-                        </p>
-                        <button class="btn btn-outline-secondary" disabled>
-                            <i class="bi bi-tools"></i> Próximamente
-                        </button>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-md-4">
-                <div class="card report-card">
-                    <div class="card-body text-center p-4">
-                        <div class="report-icon">
-                            <i class="bi bi-flower1 text-success"></i>
-                        </div>
-                        <h3 class="h5 mb-3">Balance Nutricional</h3>
-                        <p class="text-muted mb-4">
-                            Seguimiento de aplicaciones de fertilizantes y nutrientes.
-                        </p>
-                        <button class="btn btn-outline-secondary" disabled>
-                            <i class="bi bi-tools"></i> Próximamente
-                        </button>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-md-4">
-                <div class="card report-card">
-                    <div class="card-body text-center p-4">
-                        <div class="report-icon">
-                            <i class="bi bi-speedometer2 text-warning"></i>
-                        </div>
-                        <h3 class="h5 mb-3">Dashboard de KPIs</h3>
-                        <p class="text-muted mb-4">
-                            Indicadores clave de rendimiento y análisis de tendencias.
-                        </p>
-                        <button class="btn btn-outline-secondary" disabled>
-                            <i class="bi bi-tools"></i> Próximamente
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Reportes Específicos -->
-    <div class="mb-5">
-        <h2 class="section-title">
-            <i class="bi bi-clipboard-data"></i> Reportes Específicos
-        </h2>
-        <div class="row g-4">
-            <div class="col-md-3">
-                <div class="card report-card">
-                    <div class="card-body text-center p-3">
-                        <div class="report-icon" style="font-size: 2rem;">
-                            <i class="bi bi-shield-check text-danger"></i>
-                        </div>
-                        <h3 class="h6 mb-2">Fitosanitarios</h3>
-                        <p class="text-muted small mb-3">
-                            Registro de aplicaciones químicas
-                        </p>
-                        <button class="btn btn-sm btn-outline-secondary" disabled>
-                            Próximamente
-                        </button>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-md-3">
-                <div class="card report-card">
-                    <div class="card-body text-center p-3">
-                        <div class="report-icon" style="font-size: 2rem;">
-                            <i class="bi bi-basket text-warning"></i>
-                        </div>
-                        <h3 class="h6 mb-2">Cosecha</h3>
-                        <p class="text-muted small mb-3">
-                            Análisis de producción y calidad
-                        </p>
-                        <button class="btn btn-sm btn-outline-secondary" disabled>
-                            Próximamente
-                        </button>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-md-3">
-                <div class="card report-card">
-                    <div class="card-body text-center p-3">
-                        <div class="report-icon" style="font-size: 2rem;">
-                            <i class="bi bi-people text-primary"></i>
-                        </div>
-                        <h3 class="h6 mb-2">Mano de Obra</h3>
-                        <p class="text-muted small mb-3">
-                            Costos laborales por actividad
-                        </p>
-                        <button class="btn btn-sm btn-outline-secondary" disabled>
-                            Próximamente
-                        </button>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-md-3">
-                <div class="card report-card">
-                    <div class="card-body text-center p-3">
-                        <div class="report-icon" style="font-size: 2rem;">
-                            <i class="bi bi-clipboard-check text-success"></i>
-                        </div>
-                        <h3 class="h6 mb-2">Auditoría BPA</h3>
-                        <p class="text-muted small mb-3">
-                            Certificaciones y cumplimiento
-                        </p>
-                        <button class="btn btn-sm btn-outline-secondary" disabled>
-                            Próximamente
-                        </button>
+                        <a href="{% url 'campaign_traceability_report' %}" class="btn btn-success btn-lg">
+                            <i class="bi bi-file-pdf"></i> Generar Reporte
+                        </a>
                     </div>
                 </div>
             </div>

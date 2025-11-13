@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}{{ page_title }} - Sistema de Trazabilidad{% endblock %}
+{% block title %}Trazabilidad por Campaña - Sistema de Trazabilidad{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -65,123 +65,130 @@
             <ol class="breadcrumb">
                 <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Inicio</a></li>
                 <li class="breadcrumb-item"><a href="{% url 'reports_dashboard' %}">Reportes</a></li>
-                <li class="breadcrumb-item active">{{ page_title }}</li>
+                <li class="breadcrumb-item active">Trazabilidad por Campaña</li>
             </ol>
         </nav>
         <h1 class="h2">
-            <i class="bi bi-file-earmark-text text-primary"></i>
-            {{ page_title }}
+            <i class="bi bi-calendar-check text-primary"></i>
+            Reporte de Trazabilidad por Campaña
         </h1>
-        <p class="text-muted">Complete el formulario para generar el reporte de trazabilidad</p>
+        <p class="text-muted">Genera un reporte consolidado de todos los eventos de una campaña</p>
     </div>
-    
-    <!-- Mensajes de Error -->
-    {% if error %}
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        <i class="bi bi-exclamation-triangle-fill"></i>
-        <strong>Error:</strong> {{ error }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-    {% endif %}
     
     <!-- Formulario -->
     <div class="row">
         <div class="col-lg-8">
             <div class="card shadow-sm">
                 <div class="card-body p-4">
-                    <form method="post" action="{% url 'traceability_report' %}">
+                    <form method="post" id="reportForm">
                         {% csrf_token %}
                         
                         <!-- Sección: Parámetros Básicos -->
                         <div class="form-section">
                             <h3><i class="bi bi-gear"></i> Parámetros Básicos</h3>
                             
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label for="field_id" class="form-label">
-                                        Lote <span class="text-danger">*</span>
-                                    </label>
-                                    <select class="form-select" id="field_id" name="field_id" required>
-                                        <option value="">Seleccione un lote...</option>
-                                        {% for field in fields %}
-                                        <option value="{{ field.id }}">{{ field.name }} ({{ field.code }}) - {{ field.surface_ha }} ha</option>
-                                        {% endfor %}
-                                    </select>
-                                    <div class="form-text">Lote sobre el cual se generará el reporte</div>
-                                </div>
-                                
-                                <div class="col-md-6 mb-3">
-                                    <label for="campaign_id" class="form-label">
-                                        Campaña <span class="text-muted">(opcional)</span>
-                                    </label>
-                                    <select class="form-select" id="campaign_id" name="campaign_id">
-                                        <option value="">Todas las campañas</option>
-                                        {% for campaign in campaigns %}
-                                        <option value="{{ campaign.id }}">
-                                            {{ campaign.name }} ({{ campaign.start_date|date:"d/m/Y" }} - {{ campaign.end_date|date:"d/m/Y" }})
-                                        </option>
-                                        {% endfor %}
-                                    </select>
-                                    <div class="form-text">Filtrar eventos por campaña específica</div>
-                                </div>
-                            </div>
-                            
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label for="date_from" class="form-label">
-                                        Fecha Desde <span class="text-muted">(opcional)</span>
-                                    </label>
-                                    <input type="date" class="form-control" id="date_from" name="date_from">
-                                    <div class="form-text">Inicio del período a reportar</div>
-                                </div>
-                                
-                                <div class="col-md-6 mb-3">
-                                    <label for="date_to" class="form-label">
-                                        Fecha Hasta <span class="text-muted">(opcional)</span>
-                                    </label>
-                                    <input type="date" class="form-control" id="date_to" name="date_to">
-                                    <div class="form-text">Fin del período a reportar</div>
+                            <div class="mb-3">
+                                <label for="campaign_id" class="form-label">
+                                    <i class="bi bi-calendar-event"></i> Campaña <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-select form-select-lg" id="campaign_id" name="campaign_id" required>
+                                    <option value="">-- Seleccione una campaña --</option>
+                                    {% for campaign in campaigns %}
+                                    <option value="{{ campaign.id }}">
+                                        {{ campaign.name }} 
+                                        ({{ campaign.start_date|date:"d/m/Y" }} - 
+                                        {% if campaign.end_date %}{{ campaign.end_date|date:"d/m/Y" }}{% else %}Activa{% endif %})
+                                        {% if campaign.is_active %} [ACTIVA]{% endif %}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <div class="form-text">
+                                    <i class="bi bi-info-circle"></i> 
+                                    Seleccione la campaña para generar el reporte consolidado
                                 </div>
                             </div>
                         </div>
                         
-                        <!-- Sección: Tipos de Evento -->
+                        <!-- Sección: Filtros Opcionales -->
                         <div class="form-section">
-                            <h3><i class="bi bi-funnel"></i> Filtrar por Tipos de Evento</h3>
-                            <p class="text-muted small mb-3">
-                                Seleccione los tipos de evento a incluir. Si no selecciona ninguno, se incluirán todos.
-                            </p>
+                            <h3><i class="bi bi-funnel"></i> Filtros Opcionales</h3>
                             
-                            <div class="row">
-                                {% for event_type in event_types %}
-                                <div class="col-md-6 col-lg-4">
-                                    <div class="event-type-checkbox">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" 
-                                                   name="event_types" value="{{ event_type.id }}" 
-                                                   id="event_type_{{ event_type.id }}">
-                                            <label class="form-check-label" for="event_type_{{ event_type.id }}">
-                                                {{ event_type.name }}
-                                            </label>
+                            <!-- Filtro de Lotes -->
+                            <div class="mb-4">
+                                <label class="form-label">
+                                    <i class="bi bi-geo-alt"></i> Lotes Específicos
+                                </label>
+                                <p class="text-muted small mb-2">
+                                    Seleccione los lotes a incluir. Si no selecciona ninguno, se incluirán todos los lotes de la campaña.
+                                </p>
+                                
+                                <div class="row">
+                                    {% for field in fields %}
+                                    <div class="col-md-6 col-lg-4">
+                                        <div class="event-type-checkbox">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" 
+                                                       name="field_ids" value="{{ field.id }}" 
+                                                       id="field_{{ field.id }}">
+                                                <label class="form-check-label" for="field_{{ field.id }}">
+                                                    {{ field.name }} <small class="text-muted">({{ field.area_hectares }} ha)</small>
+                                                </label>
+                                            </div>
                                         </div>
                                     </div>
+                                    {% endfor %}
                                 </div>
-                                {% endfor %}
+                                
+                                <div class="mt-2">
+                                    <button type="button" class="btn btn-sm btn-outline-primary" id="select-all-fields">
+                                        <i class="bi bi-check-all"></i> Seleccionar Todos
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="deselect-all-fields">
+                                        <i class="bi bi-x"></i> Deseleccionar Todos
+                                    </button>
+                                </div>
                             </div>
-                            
-                            <div class="mt-3">
-                                <button type="button" class="btn btn-sm btn-outline-primary" id="select-all">
-                                    <i class="bi bi-check-all"></i> Seleccionar Todos
-                                </button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary" id="deselect-all">
-                                    <i class="bi bi-x"></i> Deseleccionar Todos
-                                </button>
+
+                            <!-- Filtro de Tipos de Evento -->
+                            <div class="mb-3">
+                                <label class="form-label">
+                                    <i class="bi bi-calendar2-event"></i> Tipos de Eventos
+                                </label>
+                                <p class="text-muted small mb-2">
+                                    Seleccione los tipos de eventos a incluir. Si no selecciona ninguno, se incluirán todos.
+                                </p>
+                                
+                                <div class="row">
+                                    {% for event_type in event_types %}
+                                    <div class="col-md-6 col-lg-4">
+                                        <div class="event-type-checkbox">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" 
+                                                       name="event_types" value="{{ event_type.id }}" 
+                                                       id="event_type_{{ event_type.id }}">
+                                                <label class="form-check-label" for="event_type_{{ event_type.id }}">
+                                                    {{ event_type.name }}
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                
+                                <div class="mt-2">
+                                    <button type="button" class="btn btn-sm btn-outline-primary" id="select-all-events">
+                                        <i class="bi bi-check-all"></i> Seleccionar Todos
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="deselect-all-events">
+                                        <i class="bi bi-x"></i> Deseleccionar Todos
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                        
+
                         <!-- Sección: Formato de Exportación -->
                         <div class="form-section">
-                            <h3><i class="bi bi-file-earmark"></i> Formato de Exportación</h3>
+                            <h3><i class="bi bi-file-earmark-arrow-down"></i> Formato de Exportación</h3>
                             
                             <div class="row g-3">
                                 <div class="col-md-4">
@@ -193,7 +200,7 @@
                                                 <div class="text-center">
                                                     <i class="bi bi-file-pdf text-danger" style="font-size: 2rem;"></i>
                                                     <div class="mt-2"><strong>PDF</strong></div>
-                                                    <small class="text-muted">Reporte imprimible profesional</small>
+                                                    <small class="text-muted">Reporte imprimible</small>
                                                 </div>
                                             </label>
                                         </div>
@@ -239,7 +246,7 @@
                             <a href="{% url 'reports_dashboard' %}" class="btn btn-outline-secondary">
                                 <i class="bi bi-arrow-left"></i> Volver
                             </a>
-                            <button type="submit" class="btn btn-primary btn-lg px-5">
+                            <button type="submit" class="btn btn-primary btn-lg px-5" id="generateBtn">
                                 <i class="bi bi-download"></i> Generar Reporte
                             </button>
                         </div>
@@ -257,11 +264,12 @@
                 <div class="card-body">
                     <h5 class="card-title">¿Qué incluye este reporte?</h5>
                     <ul class="small">
-                        <li>Información general del lote</li>
-                        <li>Resumen estadístico de eventos</li>
-                        <li>Línea de tiempo completa</li>
-                        <li>Lista de archivos adjuntos</li>
-                        <li>Distribución por tipo de evento</li>
+                        <li>Información general de la campaña</li>
+                        <li>Estadísticas consolidadas por lote</li>
+                        <li>Resumen de eventos por tipo</li>
+                        <li>Comparativas entre lotes</li>
+                        <li>Distribución temporal de actividades</li>
+                        <li>Totales de insumos utilizados</li>
                     </ul>
                     
                     <hr>
@@ -269,44 +277,59 @@
                     <h5 class="card-title">Formatos disponibles:</h5>
                     <div class="mb-2">
                         <strong>PDF:</strong>
-                        <p class="small text-muted mb-0">Reporte formal con diseño profesional, ideal para impresión y presentaciones.</p>
+                        <p class="small text-muted mb-0">Reporte formal con diseño profesional, ideal para presentaciones y auditorías.</p>
                     </div>
                     <div class="mb-2">
                         <strong>Excel:</strong>
-                        <p class="small text-muted mb-0">Múltiples hojas con datos formateados, gráficos y tablas dinámicas.</p>
+                        <p class="small text-muted mb-0">Múltiples hojas con datos consolidados, tablas resumen y comparativas.</p>
                     </div>
                     <div class="mb-2">
                         <strong>CSV:</strong>
-                        <p class="small text-muted mb-0">Datos tabulares simples para análisis en herramientas externas.</p>
+                        <p class="small text-muted mb-0">Datos tabulares para análisis en herramientas externas o importación.</p>
                     </div>
                     
                     <hr>
                     
                     <h5 class="card-title">Consejos:</h5>
                     <ul class="small">
-                        <li>Use filtros de fecha para reportes específicos</li>
-                        <li>Seleccione campaña para análisis por ciclo</li>
-                        <li>Filtre por tipo de evento para reportes especializados</li>
-                        <li>Use PDF para certificaciones y auditorías</li>
-                        <li>Use Excel para análisis detallado de datos</li>
+                        <li>Seleccione una campaña para ver todos sus lotes</li>
+                        <li>Filtre por lotes específicos para comparativas</li>
+                        <li>Use filtros de tipos de evento para reportes especializados</li>
+                        <li>PDF recomendado para certificaciones</li>
+                        <li>Excel ideal para análisis detallado de datos</li>
+                        <li>CSV para integración con otros sistemas</li>
                     </ul>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
 {% endblock %}
 
 {% block extra_js %}
 <script>
+    // Seleccionar/Deseleccionar todos los lotes
+    document.getElementById('select-all-fields').addEventListener('click', function() {
+        document.querySelectorAll('input[name="field_ids"]').forEach(checkbox => {
+            checkbox.checked = true;
+        });
+    });
+    
+    document.getElementById('deselect-all-fields').addEventListener('click', function() {
+        document.querySelectorAll('input[name="field_ids"]').forEach(checkbox => {
+            checkbox.checked = false;
+        });
+    });
+    
     // Seleccionar/Deseleccionar todos los tipos de evento
-    document.getElementById('select-all').addEventListener('click', function() {
+    document.getElementById('select-all-events').addEventListener('click', function() {
         document.querySelectorAll('input[name="event_types"]').forEach(checkbox => {
             checkbox.checked = true;
         });
     });
     
-    document.getElementById('deselect-all').addEventListener('click', function() {
+    document.getElementById('deselect-all-events').addEventListener('click', function() {
         document.querySelectorAll('input[name="event_types"]').forEach(checkbox => {
             checkbox.checked = false;
         });
@@ -314,10 +337,10 @@
     
     // Validación del formulario
     document.querySelector('form').addEventListener('submit', function(e) {
-        const fieldId = document.getElementById('field_id').value;
-        if (!fieldId) {
+        const campaignId = document.getElementById('campaign_id').value;
+        if (!campaignId) {
             e.preventDefault();
-            alert('Debe seleccionar un lote');
+            alert('Debe seleccionar una campaña');
             return false;
         }
         

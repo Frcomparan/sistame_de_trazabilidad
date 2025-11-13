@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ report_title }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm;
+            @bottom-right {
+                content: "Página " counter(page) " de " counter(pages);
+                font-size: 9pt;
+                color: #666;
+            }
+        }
+        
+        body {
+            font-family: 'DejaVu Sans', Arial, sans-serif;
+            font-size: 10pt;
+            line-height: 1.4;
+            color: #333;
+        }
+        
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #2c5f2d;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .header h1 {
+            color: #2c5f2d;
+            font-size: 20pt;
+            margin: 0 0 5px 0;
+        }
+        
+        .header p {
+            margin: 3px 0;
+            color: #666;
+            font-size: 9pt;
+        }
+        
+        .campaign-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-left: 4px solid #2c5f2d;
+            margin-bottom: 20px;
+        }
+        
+        .campaign-info h2 {
+            color: #2c5f2d;
+            font-size: 14pt;
+            margin: 0 0 10px 0;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        
+        .info-item {
+            margin: 5px 0;
+        }
+        
+        .info-label {
+            font-weight: bold;
+            color: #555;
+        }
+        
+        .summary-stats {
+            margin: 20px 0;
+            padding: 15px;
+            background: #e8f5e9;
+            border-radius: 5px;
+        }
+        
+        .summary-stats h3 {
+            color: #2c5f2d;
+            font-size: 12pt;
+            margin: 0 0 10px 0;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 10px;
+        }
+        
+        .stat-box {
+            text-align: center;
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+            border: 1px solid #c8e6c9;
+        }
+        
+        .stat-number {
+            font-size: 24pt;
+            font-weight: bold;
+            color: #2c5f2d;
+            display: block;
+        }
+        
+        .stat-label {
+            font-size: 9pt;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .field-section {
+            margin: 30px 0;
+            page-break-inside: avoid;
+        }
+        
+        .field-header {
+            background: #2c5f2d;
+            color: white;
+            padding: 10px 15px;
+            margin-bottom: 15px;
+        }
+        
+        .field-header h3 {
+            margin: 0;
+            font-size: 12pt;
+        }
+        
+        .field-stats {
+            background: #f8f9fa;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-left: 3px solid #4caf50;
+        }
+        
+        .event-type-summary {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 5px;
+            margin: 5px 0;
+            font-size: 9pt;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 9pt;
+        }
+        
+        th {
+            background: #2c5f2d;
+            color: white;
+            padding: 8px;
+            text-align: left;
+            font-weight: bold;
+        }
+        
+        td {
+            padding: 6px 8px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        
+        .event-observations {
+            font-size: 8pt;
+            color: #666;
+            font-style: italic;
+        }
+        
+        .footer {
+            margin-top: 30px;
+            padding-top: 15px;
+            border-top: 2px solid #e0e0e0;
+            text-align: center;
+            font-size: 8pt;
+            color: #999;
+        }
+        
+        .page-break {
+            page-break-after: always;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <h1>{{ report_title }}</h1>
+        <p>Sistema de Trazabilidad Agrícola</p>
+        <p>Generado el {{ generated_at|date:"d/m/Y H:i" }}</p>
+    </div>
+    
+    <!-- Campaign Information -->
+    <div class="campaign-info">
+        <h2>Información de la Campaña</h2>
+        <div class="info-grid">
+            <div class="info-item">
+                <span class="info-label">Campaña:</span> {{ campaign.name }}
+            </div>
+            <div class="info-item">
+                <span class="info-label">Estado:</span> 
+                {% if campaign.is_active %}Activa{% else %}Finalizada{% endif %}
+            </div>
+            <div class="info-item">
+                <span class="info-label">Fecha Inicio:</span> {{ campaign.start_date|date:"d/m/Y" }}
+            </div>
+            <div class="info-item">
+                <span class="info-label">Fecha Fin:</span> 
+                {% if campaign.end_date %}{{ campaign.end_date|date:"d/m/Y" }}{% else %}En curso{% endif %}
+            </div>
+            <div class="info-item">
+                <span class="info-label">Lotes Involucrados:</span> {{ total_fields }}
+            </div>
+            <div class="info-item">
+                <span class="info-label">Total Eventos:</span> {{ general_stats.total }}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Summary Statistics -->
+    <div class="summary-stats">
+        <h3>Resumen General de Eventos</h3>
+        <div class="stats-grid">
+            <div class="stat-box">
+                <span class="stat-number">{{ general_stats.total }}</span>
+                <div class="stat-label">Total de Eventos</div>
+            </div>
+            <div class="stat-box">
+                <span class="stat-number">{{ total_fields }}</span>
+                <div class="stat-label">Lotes</div>
+            </div>
+            <div class="stat-box">
+                <span class="stat-number">{{ general_stats.by_type|length }}</span>
+                <div class="stat-label">Tipos de Eventos</div>
+            </div>
+        </div>
+        
+        <div style="margin-top: 15px;">
+            <strong>Distribución por Tipo de Evento:</strong>
+            {% for event_type, count in general_stats.by_type.items %}
+            <div class="event-type-summary">
+                <span>{{ event_type }}</span>
+                <span style="text-align: right;"><strong>{{ count }}</strong> evento{{ count|pluralize }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <div class="page-break"></div>
+    
+    <!-- Events by Field -->
+    <h2 style="color: #2c5f2d; margin-top: 30px;">Eventos por Lote</h2>
+    
+    {% for field_stat in field_stats %}
+    <div class="field-section">
+        <div class="field-header">
+            <h3>{{ field_stat.field.name }} - {{ field_stat.field.code }}</h3>
+        </div>
+        
+        <div class="field-stats">
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                <div>
+                    <strong>Área:</strong> {{ field_stat.field.area_hectares }} ha
+                </div>
+                <div>
+                    <strong>Total Eventos:</strong> {{ field_stat.total_events }}
+                </div>
+                <div>
+                    <strong>Ubicación:</strong> {{ field_stat.field.location|default:"N/A" }}
+                </div>
+            </div>
+            
+            <div style="margin-top: 10px;">
+                <strong style="font-size: 9pt;">Eventos por tipo:</strong>
+                {% for event_type, count in field_stat.by_type.items %}
+                <div class="event-type-summary" style="font-size: 8pt;">
+                    <span>{{ event_type }}</span>
+                    <span style="text-align: right;">{{ count }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        {% if field_stat.events %}
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 15%;">Fecha</th>
+                    <th style="width: 25%;">Tipo de Evento</th>
+                    <th style="width: 45%;">Observaciones</th>
+                    <th style="width: 15%;">Creado Por</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for event in field_stat.events %}
+                <tr>
+                    <td>{{ event.timestamp|date:"d/m/Y H:i" }}</td>
+                    <td>{{ event.event_type.name }}</td>
+                    <td>
+                        {% if event.observations %}
+                        <span class="event-observations">{{ event.observations|truncatewords:15 }}</span>
+                        {% else %}
+                        <span style="color: #ccc;">Sin observaciones</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-size: 8pt;">
+                        {% if event.created_by %}
+                        {{ event.created_by.get_full_name|default:event.created_by.username }}
+                        {% else %}
+                        Sistema
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p style="text-align: center; color: #999; padding: 20px;">
+            No hay eventos registrados para este lote en esta campaña.
+        </p>
+        {% endif %}
+    </div>
+    
+    {% if not forloop.last %}
+    <div class="page-break"></div>
+    {% endif %}
+    {% endfor %}
+    
+    <!-- Footer -->
+    <div class="footer">
+        <p>Este reporte fue generado automáticamente por el Sistema de Trazabilidad Agrícola</p>
+        <p>© {{ generated_at|date:"Y" }} - Todos los derechos reservados</p>
+    </div>
+</body>
+</html>

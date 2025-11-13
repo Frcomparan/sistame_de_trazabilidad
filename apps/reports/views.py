@@ -272,3 +272,108 @@ def export_events_view(request):
         return HttpResponse(f'Error al exportar datos: {str(e)}', status=500)
 
 
+@login_required
+@require_http_methods(["GET", "POST"])
+def campaign_traceability_report_view(request):
+    """
+    Vista para generar reporte de trazabilidad por campaña.
+    GET: Muestra formulario
+    POST: Genera el reporte en el formato solicitado
+    """
+    if request.method == 'GET':
+        context = {
+            'page_title': 'Reporte de Trazabilidad por Campaña',
+            'fields': Field.objects.filter(is_active=True).order_by('name'),
+            'campaigns': Campaign.objects.all().order_by('-start_date'),
+            'event_types': EventType.objects.all().order_by('name'),
+        }
+        return render(request, 'reports/campaign_traceability_form.html', context)
+    
+    # POST - Generar reporte
+    campaign_id = request.POST.get('campaign_id')
+    field_ids = request.POST.getlist('field_ids')  # Múltiples lotes opcionales
+    event_types = request.POST.getlist('event_types')
+    export_format = request.POST.get('format', 'pdf')
+    
+    # Validar campaña requerida
+    if not campaign_id:
+        context = {
+            'page_title': 'Reporte de Trazabilidad por Campaña',
+            'fields': Field.objects.filter(is_active=True).order_by('name'),
+            'campaigns': Campaign.objects.all().order_by('-start_date'),
+            'event_types': EventType.objects.all().order_by('name'),
+            'error': 'Debe seleccionar una campaña'
+        }
+        return render(request, 'reports/campaign_traceability_form.html', context)
+    
+    # Preparar parámetros
+    field_ids_list = field_ids if field_ids else None
+    event_types_list = event_types if event_types else None
+    
+    try:
+        if export_format == 'pdf':
+            # Generar PDF
+            generator = PDFReportGenerator()
+            pdf_buffer = generator.generate_campaign_traceability_report(
+                campaign_id=campaign_id,
+                field_ids=field_ids_list,
+                event_types=event_types_list
+            )
+            
+            campaign = Campaign.objects.get(id=campaign_id)
+            filename = f"trazabilidad_campana_{campaign.name.replace(' ', '_')}_{timezone.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+            
+            response = FileResponse(pdf_buffer, content_type='application/pdf')
+            response['Content-Disposition'] = f'attachment; filename="{filename}"'
+            return response
+            
+        elif export_format == 'csv':
+            # Generar CSV
+            exporter = CSVExporter()
+            data = exporter.export_campaign_events(
+                campaign_id=campaign_id,
+                field_ids=field_ids_list,
+                event_types=event_types_list
+            )
+            
+            campaign = Campaign.objects.get(id=campaign_id)
+            filename = f"eventos_campana_{campaign.name.replace(' ', '_')}_{timezone.now().strftime('%Y%m%d_%H%M%S')}.csv"
+            
+            response = HttpResponse(content_type='text/csv; charset=utf-8')
+            response['Content-Disposition'] = f'attachment; filename="{filename}"'
+            response.write('\ufeff')  # BOM para Excel
+            
+            writer = csv.DictWriter(response, fieldnames=data[0].keys() if data else [])
+            writer.writeheader()
+            writer.writerows(data)
+            
+            return response
+            
+        elif export_format == 'excel':
+            # Generar Excel
+            exporter = ExcelExporter()
+            excel_buffer = exporter.export_campaign_events(
+                campaign_id=campaign_id,
+                field_ids=field_ids_list,
+                event_types=event_types_list
+            )
+            
+            campaign = Campaign.objects.get(id=campaign_id)
+            filename = f"eventos_campana_{campaign.name.replace(' ', '_')}_{timezone.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+            
+            response = FileResponse(
+                excel_buffer,
+                content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            )
+            response['Content-Disposition'] = f'attachment; filename="{filename}"'
+            return response
+    
+    except Exception as e:
+        context = {
+            'page_title': 'Reporte de Trazabilidad por Campaña',
+            'fields': Field.objects.filter(is_active=True).order_by('name'),
+            'campaigns': Campaign.objects.all().order_by('-start_date'),
+            'event_types': EventType.objects.all().order_by('name'),
+            'error': f'Error al generar el reporte: {str(e)}'
+        }
+        return render(request, 'reports/campaign_traceability_form.html', context)
