@@ -1,0 +1,5 @@
+# robots.txt para Sistema de Trazabilidad Agrícola
+# Este es un sistema privado interno
+
+User-agent: *
+Disallow: /
