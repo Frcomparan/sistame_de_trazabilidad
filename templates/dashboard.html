@@ -10,7 +10,7 @@
             <div class="jumbotron bg-white p-5 rounded shadow-sm">
                 <h1 class="display-4">
                     <i class="bi bi-flower1 text-success"></i> 
-                    Bienvenido, {{ user.get_full_name|default:user.username }}!
+                    Bienvenido!
                 </h1>
                 <p class="lead">Sistema de Trazabilidad Agrícola - Cultivo de Limón</p>
                 <hr class="my-4">
@@ -125,16 +125,37 @@
                         <div>
                             <i class="bi bi-calendar3-event text-warning" style="font-size: 3rem;"></i>
                         </div>
-                        <span class="badge bg-warning text-dark">Dinámico</span>
+                        <span class="badge bg-success">Disponible</span>
                     </div>
                     <h5 class="card-title">Eventos</h5>
-                    <p class="card-text text-muted">Sistema de registro dinámico de eventos de trazabilidad.</p>
+                    <p class="card-text text-muted">Sistema de registro de eventos de trazabilidad del cultivo.</p>
                     <div class="d-flex gap-2 mt-3">
                         <a href="{% url 'event_list' %}" class="btn btn-warning btn-sm">
                             <i class="bi bi-list-ul"></i> Ver Lista
                         </a>
                         <a href="{% url 'event_create' %}" class="btn btn-outline-warning btn-sm">
                             <i class="bi bi-plus-circle"></i> Crear
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reportes -->
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card border-0 shadow-sm h-100 hover-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <i class="bi bi-file-earmark-bar-graph text-danger" style="font-size: 3rem;"></i>
+                        </div>
+                        <span class="badge bg-success">Disponible</span>
+                    </div>
+                    <h5 class="card-title">Reportes</h5>
+                    <p class="card-text text-muted">Generación de reportes y análisis de trazabilidad.</p>
+                    <div class="d-flex gap-2 mt-3">
+                        <a href="{% url 'reports_dashboard' %}" class="btn btn-danger btn-sm">
+                            <i class="bi bi-file-earmark-text"></i> Ir a Reportes
                         </a>
                     </div>
                 </div>
@@ -174,22 +195,6 @@
             </div>
         </div>
         {% endif %}
-
-        <!-- Reportes -->
-        <div class="col-md-6 col-lg-3 mb-4">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body text-center">
-                    <div class="mb-3">
-                        <i class="bi bi-graph-up text-danger" style="font-size: 3rem;"></i>
-                    </div>
-                    <h5 class="card-title">Reportes</h5>
-                    <p class="card-text text-muted">Análisis y estadísticas</p>
-                    <button class="btn btn-outline-secondary btn-sm" disabled>
-                        Próximamente
-                    </button>
-                </div>
-            </div>
-        </div>
     </div>
 
     <!-- Información del Usuario -->
@@ -231,37 +236,6 @@
         </div>
     </div>
 
-    <!-- Accesos Rápidos a API -->
-    <div class="row mt-4 mb-5">
-        <div class="col-12">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-light">
-                    <h5 class="mb-0">
-                        <i class="bi bi-lightning-fill"></i> Accesos Rápidos API
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="d-flex flex-wrap gap-2">
-                        <a href="/api/v1/catalogs/fields/" class="btn btn-sm btn-outline-success">
-                            <i class="bi bi-geo-alt"></i> API Campos
-                        </a>
-                        <a href="/api/v1/catalogs/campaigns/" class="btn btn-sm btn-outline-primary">
-                            <i class="bi bi-calendar-event"></i> API Campañas
-                        </a>
-                        <a href="/api/v1/events/" class="btn btn-sm btn-outline-warning">
-                            <i class="bi bi-calendar3"></i> API Eventos
-                        </a>
-                        <a href="/api/v1/reports/health/" class="btn btn-sm btn-outline-success">
-                            <i class="bi bi-heart-pulse"></i> Health Check
-                        </a>
-                        <a href="/api/schema/" class="btn btn-sm btn-outline-info">
-                            <i class="bi bi-file-code"></i> OpenAPI Schema
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
 
 <style>
