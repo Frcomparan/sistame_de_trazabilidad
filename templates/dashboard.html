@@ -1,23 +1,87 @@
 {% extends "base.html" %}
+{% load static %}
 
-{% block title %}Panel de Control - Sistema de Trazabilidad{% endblock %}
-{% block description %}Panel de control del sistema de trazabilidad agrícola. Gestión de campos, campañas y eventos del cultivo de limón.{% endblock %}
+{% block title %}Panel de Control - Green Flowers{% endblock %}
+{% block description %}Panel de control de Green Flowers. Gestión de campos, campañas y eventos del cultivo de limón.{% endblock %}
 
 {% block content %}
 <div class="container mt-5">
     <div class="row">
         <div class="col-12">
-            <div class="jumbotron bg-white p-5 rounded shadow-sm">
-                <h1 class="display-4">
-                    <i class="bi bi-flower1 text-success"></i> 
-                    Bienvenido!
-                </h1>
-                <p class="lead">Sistema de Trazabilidad Agrícola - Cultivo de Limón</p>
-                <hr class="my-4">
-                <p>
-                    Este es el panel de control del sistema de trazabilidad. 
-                    Desde aquí podrás gestionar todos los aspectos relacionados con el cultivo de limón.
-                </p>
+            <!-- Carousel con texto superpuesto -->
+            <div id="welcomeCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="4000">
+                <div class="carousel-inner rounded shadow-sm">
+                    <!-- Slide 1 -->
+                    <div class="carousel-item active">
+                        <img src="{% static 'img/carousel/c1.jpeg' %}" class="d-block w-100 carousel-image" alt="Campo de limones 1">
+                        <div class="carousel-overlay"></div>
+                    </div>
+                    <!-- Slide 2 -->
+                    <div class="carousel-item">
+                        <img src="{% static 'img/carousel/c2.jpeg' %}" class="d-block w-100 carousel-image" alt="Campo de limones 2">
+                        <div class="carousel-overlay"></div>
+                    </div>
+                    <!-- Slide 3 -->
+                    <div class="carousel-item">
+                        <img src="{% static 'img/carousel/c3.jpeg' %}" class="d-block w-100 carousel-image" alt="Campo de limones 3">
+                        <div class="carousel-overlay"></div>
+                    </div>
+                    <!-- Slide 4 -->
+                    <div class="carousel-item">
+                        <img src="{% static 'img/carousel/c4.jpeg' %}" class="d-block w-100 carousel-image" alt="Campo de limones 4">
+                        <div class="carousel-overlay"></div>
+                    </div>
+                    <!-- Slide 5 -->
+                    <div class="carousel-item">
+                        <img src="{% static 'img/carousel/c5.jpeg' %}" class="d-block w-100 carousel-image" alt="Campo de limones 5">
+                        <div class="carousel-overlay"></div>
+                    </div>
+                    <!-- Slide 6 -->
+                    <div class="carousel-item">
+                        <img src="{% static 'img/carousel/c6.jpeg' %}" class="d-block w-100 carousel-image" alt="Campo de limones 6">
+                        <div class="carousel-overlay"></div>
+                    </div>
+                    <!-- Slide 7 -->
+                    <div class="carousel-item">
+                        <img src="{% static 'img/carousel/c7.jpeg' %}" class="d-block w-100 carousel-image" alt="Campo de limones 7">
+                        <div class="carousel-overlay"></div>
+                    </div>
+
+                    <!-- Texto superpuesto (fijo sobre todas las imágenes) -->
+                    <div class="carousel-caption-custom">
+                        <h1 class="display-4 fw-bold text-white mb-3">
+                            <img src="{% static 'img/logo_green_flowers_short.png' %}" alt="Logo" class="carousel-logo"> 
+                            ¡Bienvenido!
+                        </h1>
+                        <p class="lead text-white mb-2">Green Flowers - Cultivo de Limón</p>
+                        <hr class="my-4 bg-white opacity-50">
+                        <p class="text-white">
+                            Este es el panel de control de Green Flowers. 
+                            Desde aquí podrás gestionar todos los aspectos relacionados con el cultivo de limón.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Controles del carousel -->
+                <button class="carousel-control-prev" type="button" data-bs-target="#welcomeCarousel" data-bs-slide="prev">
+                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Anterior</span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#welcomeCarousel" data-bs-slide="next">
+                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Siguiente</span>
+                </button>
+
+                <!-- Indicadores -->
+                <div class="carousel-indicators">
+                    <button type="button" data-bs-target="#welcomeCarousel" data-bs-slide-to="0" class="active"></button>
+                    <button type="button" data-bs-target="#welcomeCarousel" data-bs-slide-to="1"></button>
+                    <button type="button" data-bs-target="#welcomeCarousel" data-bs-slide-to="2"></button>
+                    <button type="button" data-bs-target="#welcomeCarousel" data-bs-slide-to="3"></button>
+                    <button type="button" data-bs-target="#welcomeCarousel" data-bs-slide-to="4"></button>
+                    <button type="button" data-bs-target="#welcomeCarousel" data-bs-slide-to="5"></button>
+                    <button type="button" data-bs-target="#welcomeCarousel" data-bs-slide-to="6"></button>
+                </div>
             </div>
         </div>
     </div>
@@ -239,6 +303,137 @@
 </div>
 
 <style>
+    /* Estilos del Carousel */
+    #welcomeCarousel {
+        position: relative;
+        height: 500px;
+        overflow: hidden;
+    }
+
+    .carousel-inner {
+        height: 100%;
+    }
+
+    .carousel-item {
+        height: 500px;
+        position: relative;
+    }
+
+    .carousel-image {
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+    }
+
+    /* Overlay oscuro para mejorar legibilidad del texto */
+    .carousel-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+            to bottom,
+            rgba(0, 0, 0, 0.3) 0%,
+            rgba(0, 0, 0, 0.5) 100%
+        );
+        z-index: 1;
+    }
+
+    /* Texto superpuesto */
+    .carousel-caption-custom {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 2;
+        text-align: center;
+        width: 90%;
+        max-width: 800px;
+        text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8);
+    }
+
+    .carousel-logo {
+        height: 60px;
+        width: auto;
+        margin-right: 12px;
+        vertical-align: middle;
+        filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.8));
+    }
+
+    /* Transición suave entre slides */
+    .carousel-item {
+        transition: transform 0.8s ease-in-out;
+    }
+
+    /* Controles del carousel */
+    .carousel-control-prev,
+    .carousel-control-next {
+        z-index: 3;
+        opacity: 0.7;
+        transition: opacity 0.3s;
+    }
+
+    .carousel-control-prev:hover,
+    .carousel-control-next:hover {
+        opacity: 1;
+    }
+
+    /* Indicadores */
+    .carousel-indicators {
+        z-index: 3;
+        margin-bottom: 1rem;
+    }
+
+    .carousel-indicators button {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        opacity: 0.6;
+        background-color: white;
+    }
+
+    .carousel-indicators button.active {
+        opacity: 1;
+        background-color: #28a745;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        #welcomeCarousel,
+        .carousel-item {
+            height: 400px;
+        }
+
+        .carousel-caption-custom h1 {
+            font-size: 2rem;
+        }
+
+        .carousel-caption-custom p {
+            font-size: 0.9rem;
+        }
+
+        .carousel-logo {
+            height: 40px;
+        }
+    }
+
+    @media (max-width: 576px) {
+        #welcomeCarousel,
+        .carousel-item {
+            height: 350px;
+        }
+
+        .carousel-caption-custom h1 {
+            font-size: 1.5rem;
+        }
+
+        .carousel-logo {
+            height: 35px;
+        }
+    }
+
+    /* Estilos existentes */
     .jumbotron {
         background: linear-gradient(135deg, #f8faf6 0%, #e8f5e9 100%);
         border: 1px solid var(--border-color);

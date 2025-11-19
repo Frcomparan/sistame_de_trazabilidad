@@ -1,7 +1,8 @@
 {% extends "base.html" %}
+{% load static %}
 
-{% block title %}Iniciar Sesión - Sistema de Trazabilidad{% endblock %}
-{% block description %}Acceso al sistema de trazabilidad agrícola para cultivo de limón{% endblock %}
+{% block title %}Iniciar Sesión - Green Flowers{% endblock %}
+{% block description %}Acceso a Green Flowers - Sistema de trazabilidad para cultivo de limón{% endblock %}
 
 {% block content %}
 <div class="container">
@@ -10,9 +11,9 @@
             <div class="card shadow-lg border-0">
                 <div class="card-header text-center py-4">
                     <h3 class="mb-0">
-                        <i class="bi bi-flower1"></i> Trazabilidad
+                        <img src="{% static 'img/logo_green_flowers_short.png' %}" alt="Logo" style="height: 40px; width: auto; margin-right: 10px; vertical-align: middle;"> Green Flowers
                     </h3>
-                    <p class="mb-0 mt-2 text-white-50 small">Sistema de Cultivo de Limón</p>
+                    <p class="mb-0 mt-2 text-white-50 small">Cultivo de Limón</p>
                 </div>
                 <div class="card-body p-4">
                     <h5 class="card-title text-center mb-4">Iniciar Sesión</h5>

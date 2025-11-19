@@ -7,11 +7,11 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     
     <!-- Title -->
-    <title>{% block title %}Sistema de Trazabilidad Agrícola{% endblock %}</title>
+    <title>{% block title %}Green Flowers{% endblock %}</title>
     
-    <!-- Basic Meta Tags -->
-    <meta name="description" content="{% block description %}Sistema de trazabilidad para el cultivo de limón. Gestión de campos, campañas y eventos del ciclo productivo.{% endblock %}">
-    <meta name="author" content="Sistema de Trazabilidad Agrícola">
+    <!-- Meta Tags -->
+    <meta name="description" content="{% block description %}Green Flowers - Sistema de trazabilidad para el cultivo de limón. Gestión de campos, campañas y eventos del ciclo productivo.{% endblock %}">
+    <meta name="author" content="Green Flowers">
     <meta name="robots" content="noindex, nofollow">
     <meta name="application-name" content="Trazabilidad Limón">
     <meta name="theme-color" content="#28a745">
@@ -21,26 +21,25 @@
     <meta property="og:site_name" content="Sistema de Trazabilidad Agrícola">
     <meta property="og:title" content="{% block og_title %}Sistema de Trazabilidad Agrícola - Cultivo de Limón{% endblock %}">
     <meta property="og:description" content="{% block og_description %}Gestión integral de trazabilidad para cultivos de limón. Registro de eventos, monitoreo y análisis del ciclo productivo.{% endblock %}">
-    <meta property="og:image" content="{% block og_image %}{{ request.scheme }}://{{ request.get_host }}{% static 'img/og-image.png' %}{% endblock %}">
+    <meta property="og:image" content="{% block og_image %}{{ request.scheme }}://{{ request.get_host }}{% static 'img/logo_green_flowers_og.png' %}{% endblock %}">
     <meta property="og:image:alt" content="Logo del Sistema de Trazabilidad Agrícola - Limón">
     <meta property="og:image:type" content="image/png">
-    <meta property="og:image:width" content="512">
-    <meta property="og:image:height" content="512">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
     <meta property="og:locale" content="es_MX">
     
     <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary">
+    <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="{% block twitter_title %}Sistema de Trazabilidad Agrícola{% endblock %}">
     <meta name="twitter:description" content="{% block twitter_description %}Gestión de trazabilidad para cultivos de limón{% endblock %}">
-    <meta name="twitter:image" content="{% block twitter_image %}{{ request.scheme }}://{{ request.get_host }}{% static 'img/og-image.png' %}{% endblock %}">
+    <meta name="twitter:image" content="{% block twitter_image %}{{ request.scheme }}://{{ request.get_host }}{% static 'img/logo_green_flowers_og.png' %}{% endblock %}">
     <meta name="twitter:image:alt" content="Logo del Sistema de Trazabilidad Agrícola">
     
     <!-- Favicon -->
     {% load static %}
-    <link rel="icon" type="image/svg+xml" href="{% static 'img/favicon.svg' %}">
-    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'img/favicon-32x32.png' %}">
-    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'img/favicon-16x16.png' %}">
-    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'img/apple-touch-icon.png' %}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'img/logo_green_flowers_short.png' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'img/logo_green_flowers_short.png' %}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'img/logo_green_flowers_short.png' %}">
     
     <!-- Manifest -->
     <link rel="manifest" href="{% static 'manifest.json' %}">
@@ -63,7 +62,7 @@
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container-fluid">
             <a class="navbar-brand" href="{% url 'dashboard' %}">
-                <i class="bi bi-flower1"></i> Trazabilidad Limón
+                <img src="{% static 'img/logo_green_flowers_short.png' %}" alt="Logo" style="height: 30px; width: auto; margin-right: 8px;"> Green Flowers
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
