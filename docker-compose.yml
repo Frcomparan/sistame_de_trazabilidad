@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   db:
@@ -37,7 +37,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-trazabilidad_pass}
       POSTGRES_HOST: db
       POSTGRES_PORT: 5432
-      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost,127.0.0.1}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost,127.0.0.1,idnxhz-ip-200-57-26-106.tunnelmole.net}
     volumes:
       - .:/app
       - static_volume:/app/staticfiles

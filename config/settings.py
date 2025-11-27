@@ -24,7 +24,14 @@ SECRET_KEY = env('SECRET_KEY', default='django-insecure-dev-key-CHANGE-IN-PRODUC
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env('DEBUG', default=True)
 
-ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1'])
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1', '.tunnelmole.net'])
+
+# CSRF Configuration
+CSRF_TRUSTED_ORIGINS = env.list('CSRF_TRUSTED_ORIGINS', default=[
+    'http://localhost',
+    'http://127.0.0.1',
+    'https://*.tunnelmole.net',
+])
 
 # Application definition
 INSTALLED_APPS = [
