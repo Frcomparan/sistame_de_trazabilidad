@@ -462,6 +462,31 @@ class ClimateEventForm(BaseEventForm):
 class HarvestEventForm(BaseEventForm):
     """Formulario para eventos de cosecha."""
     
+    # Choices para el campo variedad (tipos de limón)
+    LEMON_VARIETIES = [
+        ('', '-- Seleccionar variedad --'),
+        ('Limón Persa', 'Limón Persa'),
+        ('Limón Mexicano', 'Limón Mexicano'),
+        ('Limón Tahití', 'Limón Tahití'),
+        ('Limón Real', 'Limón Real'),
+        ('Limón Colima', 'Limón Colima'),
+        ('Limón Eureka', 'Limón Eureka'),
+        ('Limón Lisboa', 'Limón Lisboa'),
+        ('Limón Meyer', 'Limón Meyer'),
+        ('Limón Volkameriano', 'Limón Volkameriano'),
+        ("No Aplica", "No Aplica"),
+        ('Otro', 'Otro'),
+    ]
+    
+    variedad = forms.ChoiceField(
+        choices=LEMON_VARIETIES,
+        required=False,
+        widget=forms.Select(attrs={
+            'class': 'form-select',
+        }),
+        label='Variedad de Limón'
+    )
+    
     class Meta(BaseEventForm.Meta):
         model = HarvestEvent
         fields = BaseEventForm.Meta.fields + [
@@ -470,10 +495,6 @@ class HarvestEventForm(BaseEventForm):
         ]
         widgets = {
             **BaseEventForm.Meta.widgets,
-            'variedad': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Ej: Limón Persa, Limón Mexicano'
-            }),
             'volumen_kg': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.01',
@@ -526,6 +547,31 @@ class HarvestEventForm(BaseEventForm):
 class PostHarvestEventForm(BaseEventForm):
     """Formulario para eventos poscosecha."""
     
+    # Choices para el campo producto (productos de limón almacenados)
+    LEMON_PRODUCTS = [
+        ('', '-- Seleccionar producto --'),
+        ('Limón Persa', 'Limón Persa'),
+        ('Limón Mexicano', 'Limón Mexicano'),
+        ('Limón Tahití', 'Limón Tahití'),
+        ('Limón Real', 'Limón Real'),
+        ('Limón Colima', 'Limón Colima'),
+        ('Limón Eureka', 'Limón Eureka'),
+        ('Limón Lisboa', 'Limón Lisboa'),
+        ('Limón Meyer', 'Limón Meyer'),
+        ('Limón Volkameriano', 'Limón Volkameriano'),
+        ("No Aplica", "No Aplica"),
+        ('Otro', 'Otro'),
+    ]
+    
+    producto = forms.ChoiceField(
+        choices=LEMON_PRODUCTS,
+        required=True,
+        widget=forms.Select(attrs={
+            'class': 'form-select',
+        }),
+        label='Producto Almacenado'
+    )
+    
     class Meta(BaseEventForm.Meta):
         model = PostHarvestEvent
         fields = BaseEventForm.Meta.fields + [
@@ -535,10 +581,6 @@ class PostHarvestEventForm(BaseEventForm):
         ]
         widgets = {
             **BaseEventForm.Meta.widgets,
-            'producto': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Ej: Limón Persa calibre 150'
-            }),
             'cantidad_kg': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.01',

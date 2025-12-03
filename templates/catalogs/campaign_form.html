@@ -64,11 +64,17 @@
                             <i class="bi bi-question-circle text-muted" 
                                data-bs-toggle="tooltip" 
                                data-bs-placement="right" 
-                               title="Temporada del año en la que se desarrolla el cultivo (Primavera, Verano, Otoño, Invierno)"></i>
+                               title="Temporada del año en la que se desarrolla el cultivo"></i>
                         </label>
-                        <input type="text" class="form-control" id="season" name="season" 
-                               value="{% if campaign %}{{ campaign.season }}{% endif %}" 
-                               placeholder="Ej: Verano 2024">
+                        <select class="form-select" id="season" name="season">
+                            <option value="">Seleccione una temporada...</option>
+                            <option value="Primavera" {% if campaign and campaign.season == "Primavera" %}selected{% endif %}>Primavera</option>
+                            <option value="Verano" {% if campaign and campaign.season == "Verano" %}selected{% endif %}>Verano</option>
+                            <option value="Otoño" {% if campaign and campaign.season == "Otoño" %}selected{% endif %}>Otoño</option>
+                            <option value="Invierno" {% if campaign and campaign.season == "Invierno" %}selected{% endif %}>Invierno</option>
+                            <option value="Todo el año" {% if campaign and campaign.season == "Todo el año" %}selected{% endif %}>Todo el año</option>
+                            <option value="No aplica" {% if campaign and campaign.season == "No aplica" %}selected{% endif %}>No aplica</option>
+                        </select>
                         <div class="form-text">Temporada o estación del año</div>
                     </div>
                     
@@ -78,11 +84,22 @@
                             <i class="bi bi-question-circle text-muted" 
                                data-bs-toggle="tooltip" 
                                data-bs-placement="right" 
-                               title="Tipo o variedad de limón cultivada: Eureka, Lisbon, Persa, Meyer, etc."></i>
+                               title="Tipo o variedad de limón cultivada"></i>
                         </label>
-                        <input type="text" class="form-control" id="variety" name="variety" 
-                               value="{% if campaign %}{{ campaign.variety }}{% endif %}"
-                               placeholder="Ej: Eureka, Lisbon, Persa">
+                        <select class="form-select" id="variety" name="variety">
+                            <option value="">Seleccione una variedad...</option>
+                            <option value="Eureka" {% if campaign and campaign.variety == "Eureka" %}selected{% endif %}>Eureka</option>
+                            <option value="Lisbon" {% if campaign and campaign.variety == "Lisbon" %}selected{% endif %}>Lisbon</option>
+                            <option value="Persa (Persian Lime)" {% if campaign and campaign.variety == "Persa (Persian Lime)" %}selected{% endif %}>Persa (Persian Lime)</option>
+                            <option value="Meyer" {% if campaign and campaign.variety == "Meyer" %}selected{% endif %}>Meyer</option>
+                            <option value="Bearss" {% if campaign and campaign.variety == "Bearss" %}selected{% endif %}>Bearss</option>
+                            <option value="Fino" {% if campaign and campaign.variety == "Fino" %}selected{% endif %}>Fino</option>
+                            <option value="Verna" {% if campaign and campaign.variety == "Verna" %}selected{% endif %}>Verna</option>
+                            <option value="Mexicano (Key Lime)" {% if campaign and campaign.variety == "Mexicano (Key Lime)" %}selected{% endif %}>Mexicano (Key Lime)</option>
+                            <option value="Tahití" {% if campaign and campaign.variety == "Tahití" %}selected{% endif %}>Tahití</option>
+                            <option value="No aplica" {% if campaign and campaign.variety == "No aplica" %}selected{% endif %}>No aplica</option>
+                            <option value="Otro" {% if campaign and campaign.variety == "Otro" %}selected{% endif %}>Otro</option>
+                        </select>
                         <div class="form-text">Variedad específica de limón</div>
                     </div>
                 </div>

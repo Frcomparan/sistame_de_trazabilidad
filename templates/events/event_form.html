@@ -108,6 +108,7 @@
                                         Tipo de Evento <span class="text-danger">*</span>
                                     </label>
                                     {{ form.event_type }}
+                                    <input type="hidden" name="event_type" value="{{ event_type.id }}">
                                     {% if form.event_type.errors %}
                                         <div class="text-danger small">{{ form.event_type.errors }}</div>
                                     {% endif %}
@@ -364,6 +365,14 @@ document.addEventListener('DOMContentLoaded', function() {
 {% else %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Hacer que el selector de tipo de evento se vea bloqueado
+    const eventTypeField = document.getElementById('id_event_type');
+    if (eventTypeField) {
+        eventTypeField.style.backgroundColor = '#e9ecef';
+        eventTypeField.style.cursor = 'not-allowed';
+        eventTypeField.style.pointerEvents = 'none';
+    }
+    
     // Establecer fecha/hora actual por defecto
     const timestampField = document.getElementById('id_timestamp');
     if (timestampField && !timestampField.value) {
