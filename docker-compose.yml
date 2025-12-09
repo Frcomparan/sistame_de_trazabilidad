@@ -37,13 +37,13 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-trazabilidad_pass}
       POSTGRES_HOST: db
       POSTGRES_PORT: 5432
-      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost,127.0.0.1,idnxhz-ip-200-57-26-106.tunnelmole.net}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost,127.0.0.1,nwuzeo-ip-189-195-132-181.tunnelmole.net}
     volumes:
       - .:/app
       - static_volume:/app/staticfiles
       - media_volume:/app/media
     ports:
-      - "${DJANGO_PORT:-8000}:8000"
+      - "80:8000"
     depends_on:
       db:
         condition: service_healthy

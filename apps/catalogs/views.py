@@ -4,6 +4,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.core.paginator import Paginator
 from rest_framework import generics, status
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample
 from drf_spectacular.types import OpenApiTypes
 from .models import Field, Campaign, Station
@@ -157,6 +158,258 @@ class CampaignListView(generics.ListAPIView):
             queryset = queryset.filter(season__icontains=season)
         
         return queryset
+
+
+# ========== Sensores / IoT API Views ==========
+
+from django.http import JsonResponse
+from .sensors import get_thingspeak_service
+
+
+@extend_schema(
+    summary="Obtener Datos de Sensores",
+    description="""
+    Obtiene datos históricos de sensores IoT desde la plataforma ThingSpeak.
+    
+    Este endpoint permite consultar mediciones de temperatura y humedad de sensores
+    conectados al sistema de trazabilidad. Los datos se pueden filtrar por rango de fechas
+    y número de registros.
+    
+    **Parámetros de filtrado:**
+    - `results`: Número de registros a obtener (por defecto 20, máximo 8000)
+    - `start_date`: Fecha de inicio en formato ISO (YYYY-MM-DDTHH:MM:SS)
+    - `end_date`: Fecha de fin en formato ISO (YYYY-MM-DDTHH:MM:SS)
+    
+    **Casos de uso:**
+    - Consultar últimas lecturas de sensores
+    - Obtener histórico de temperatura y humedad
+    - Filtrar datos por rango de fechas específico
+    - Integrar con sistemas externos de monitoreo
+    """,
+    tags=['Sensores IoT'],
+    parameters=[
+        OpenApiParameter(
+            name='results',
+            type=OpenApiTypes.INT,
+            location=OpenApiParameter.QUERY,
+            description='Número de registros a obtener (por defecto 20, máximo 8000)',
+            required=False,
+            default=20,
+        ),
+        OpenApiParameter(
+            name='start_date',
+            type=OpenApiTypes.DATETIME,
+            location=OpenApiParameter.QUERY,
+            description='Fecha de inicio en formato ISO (YYYY-MM-DDTHH:MM:SS)',
+            required=False,
+        ),
+        OpenApiParameter(
+            name='end_date',
+            type=OpenApiTypes.DATETIME,
+            location=OpenApiParameter.QUERY,
+            description='Fecha de fin en formato ISO (YYYY-MM-DDTHH:MM:SS)',
+            required=False,
+        ),
+    ],
+    responses={
+        200: OpenApiTypes.OBJECT,
+        500: OpenApiTypes.OBJECT,
+    },
+    examples=[
+        OpenApiExample(
+            'Respuesta exitosa',
+            summary='Datos de sensores con temperatura y humedad',
+            description='Ejemplo de respuesta con datos históricos de sensores',
+            value={
+                'success': True,
+                'data': {
+                    'channel_id': 3142831,
+                    'channel_name': 'Trazabilidad',
+                    'description': 'Obtención de datos de sensores de temperatura, humedad relativa.',
+                    'field_names': {
+                        'field1': 'Temperature',
+                        'field2': 'Humidity'
+                    },
+                    'feeds': [
+                        {
+                            'timestamp': '2025-11-15T18:04:38Z',
+                            'entry_id': 305,
+                            'temperature': 28.0,
+                            'humidity': 68.0
+                        },
+                        {
+                            'timestamp': '2025-11-15T18:06:38Z',
+                            'entry_id': 306,
+                            'temperature': 28.0,
+                            'humidity': 67.0
+                        }
+                    ]
+                }
+            },
+            response_only=True,
+        ),
+        OpenApiExample(
+            'Filtrado por últimos 50 registros',
+            summary='Solicitud con parámetro results',
+            description='Ejemplo de solicitud para obtener los últimos 50 registros',
+            value={'results': 50},
+            request_only=True,
+        ),
+        OpenApiExample(
+            'Filtrado por rango de fechas',
+            summary='Solicitud con rango de fechas',
+            description='Ejemplo de solicitud con filtro de fechas',
+            value={
+                'start_date': '2025-11-15T00:00:00',
+                'end_date': '2025-11-15T23:59:59',
+                'results': 8000
+            },
+            request_only=True,
+        ),
+    ],
+)
+class SensorDataAPIView(APIView):
+    """
+    API endpoint para obtener datos de sensores IoT.
+    
+    Permite consultar mediciones de temperatura y humedad con filtros opcionales.
+    """
+    
+    def get(self, request):
+        """Obtiene datos históricos de sensores con filtros opcionales."""
+        try:
+            service = get_thingspeak_service()
+            
+            # Obtener parámetros de la petición
+            results = int(request.GET.get('results', 20))
+            start_date = request.GET.get('start_date')
+            end_date = request.GET.get('end_date')
+            
+            # Validar results
+            if results < 1:
+                return Response({
+                    'success': False,
+                    'error': 'El parámetro results debe ser mayor a 0'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            if results > 8000:
+                return Response({
+                    'success': False,
+                    'error': 'El parámetro results no puede ser mayor a 8000'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Obtener datos históricos con filtros opcionales
+            data = service.get_formatted_historical_data(
+                results=results,
+                start_date=start_date,
+                end_date=end_date
+            )
+            
+            if data:
+                return Response({
+                    'success': True,
+                    'data': data
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response({
+                    'success': False,
+                    'error': 'No se pudieron obtener datos de los sensores'
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                
+        except ValueError as e:
+            return Response({
+                'success': False,
+                'error': f'Parámetro inválido: {str(e)}'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@extend_schema(
+    summary="Obtener Información del Canal de Sensores",
+    description="""
+    Obtiene información general del canal de sensores IoT.
+    
+    Este endpoint proporciona metadatos del canal ThingSpeak incluyendo:
+    - ID del canal
+    - Nombre del canal
+    - Descripción
+    - Campos disponibles (temperatura, humedad, etc.)
+    - Fecha de creación y última actualización
+    - Último entry_id registrado
+    
+    **Casos de uso:**
+    - Obtener configuración del canal antes de consultar datos
+    - Verificar disponibilidad de campos de sensores
+    - Validar conectividad con ThingSpeak
+    """,
+    tags=['Sensores IoT'],
+    responses={
+        200: OpenApiTypes.OBJECT,
+        500: OpenApiTypes.OBJECT,
+    },
+    examples=[
+        OpenApiExample(
+            'Información del canal',
+            summary='Metadatos del canal de sensores',
+            description='Ejemplo de respuesta con información del canal ThingSpeak',
+            value={
+                'success': True,
+                'data': {
+                    'channel': {
+                        'id': 3142831,
+                        'name': 'Trazabilidad',
+                        'description': 'Obtención de datos de sensores de temperatura, humedad relativa.',
+                        'latitude': '0.0',
+                        'longitude': '0.0',
+                        'field1': 'Temperature',
+                        'field2': 'Humidity',
+                        'created_at': '2025-11-01T18:37:44Z',
+                        'updated_at': '2025-11-15T14:21:09Z',
+                        'last_entry_id': 306
+                    }
+                }
+            },
+            response_only=True,
+        ),
+    ],
+)
+class SensorChannelInfoAPIView(APIView):
+    """
+    API endpoint para obtener información del canal de sensores.
+    
+    Proporciona metadatos del canal ThingSpeak.
+    """
+    
+    def get(self, request):
+        """Obtiene información general del canal de sensores."""
+        try:
+            service = get_thingspeak_service()
+            
+            # Obtener información del canal (1 registro para tener acceso a channel info)
+            raw_data = service.get_latest_feeds(results=1)
+            
+            if raw_data and 'channel' in raw_data:
+                return Response({
+                    'success': True,
+                    'data': {
+                        'channel': raw_data['channel']
+                    }
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response({
+                    'success': False,
+                    'error': 'No se pudo obtener información del canal'
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 # ========== Template Views ==========
