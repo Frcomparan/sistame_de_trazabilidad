@@ -1,0 +1,678 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Sensores en Tiempo Real - Green Flowers{% endblock %}
+{% block description %}Monitoreo en tiempo real de sensores IoT para cultivo de limón{% endblock %}
+
+{% block extra_css %}
+<style>
+    .sensor-card {
+        transition: transform 0.2s, box-shadow 0.2s;
+        height: 100%;
+    }
+    
+    .sensor-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+    }
+    
+    .sensor-value {
+        font-size: 2.5rem;
+        font-weight: bold;
+        line-height: 1.2;
+    }
+    
+    .sensor-icon {
+        font-size: 3rem;
+        opacity: 0.3;
+    }
+    
+    .update-indicator {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: #28a745;
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0% {
+            box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7);
+        }
+        70% {
+            box-shadow: 0 0 0 10px rgba(40, 167, 69, 0);
+        }
+        100% {
+            box-shadow: 0 0 0 0 rgba(40, 167, 69, 0);
+        }
+    }
+    
+    .loading-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+    }
+    
+    .chart-container {
+        position: relative;
+        height: 300px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2>
+                        <i class="bi bi-wifi text-success"></i>
+                        Sensores en Tiempo Real
+                    </h2>
+                    <p class="text-muted mb-0">
+                        Monitoreo continuo de variables ambientales
+                    </p>
+                </div>
+                <div class="text-end">
+                    <div class="mb-2">
+                        <span class="update-indicator"></span>
+                        <span class="ms-2 small text-muted">Actualizando</span>
+                    </div>
+                    <div class="small text-muted">
+                        <i class="bi bi-clock"></i>
+                        Última actualización: <span id="lastUpdate">--:--:--</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert para errores -->
+    <div id="errorAlert" class="alert alert-danger alert-dismissible fade" role="alert" style="display: none;">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <span id="errorMessage"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <!-- Información del Canal -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h5 class="mb-1">
+                                <i class="bi bi-broadcast text-primary"></i>
+                                <span id="channelName">Cargando...</span>
+                            </h5>
+                            <p class="text-muted mb-0 small" id="channelDescription">
+                                Obteniendo información del canal...
+                            </p>
+                        </div>
+                        <div class="col-md-4 text-md-end">
+                            <div class="badge bg-success fs-6">
+                                <i class="bi bi-signal"></i> Conectado
+                            </div>
+                            <div class="small text-muted mt-2">
+                                ID: <span id="channelId">---</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tarjetas de Sensores -->
+    <div class="row g-4 mb-4" id="sensorsContainer">
+        <!-- Las tarjetas se generarán dinámicamente con JavaScript -->
+        <div class="col-12 text-center py-5">
+            <div class="spinner-border text-success" role="status">
+                <span class="visually-hidden">Cargando...</span>
+            </div>
+            <p class="text-muted mt-3">Cargando datos de sensores...</p>
+        </div>
+    </div>
+
+    <!-- Gráficos Históricos -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="bi bi-bar-chart-line"></i>
+                            Gráficos Históricos
+                        </h5>
+                        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="collapse" data-bs-target="#filterSection">
+                            <i class="bi bi-funnel"></i> Filtros
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Sección de filtros colapsable -->
+                    <div class="collapse mb-3" id="filterSection">
+                        <div class="card card-body">
+                            <div class="row g-3">
+                                <div class="col-md-3">
+                                    <label class="form-label small">Rango predefinido</label>
+                                    <select class="form-select form-select-sm" id="dateRangePreset">
+                                        <option value="last20">Últimos 20 registros</option>
+                                        <option value="last50">Últimos 50 registros</option>
+                                        <option value="last100">Últimos 100 registros</option>
+                                        <option value="today">Hoy</option>
+                                        <option value="yesterday">Ayer</option>
+                                        <option value="last7days">Últimos 7 días</option>
+                                        <option value="last30days">Últimos 30 días</option>
+                                        <option value="custom">Rango personalizado</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3" id="customStartDate" style="display: none;">
+                                    <label class="form-label small">Fecha inicio</label>
+                                    <input type="datetime-local" class="form-control form-control-sm" id="startDate">
+                                </div>
+                                <div class="col-md-3" id="customEndDate" style="display: none;">
+                                    <label class="form-label small">Fecha fin</label>
+                                    <input type="datetime-local" class="form-control form-control-sm" id="endDate">
+                                </div>
+                                <div class="col-md-3 d-flex align-items-end">
+                                    <button class="btn btn-primary btn-sm w-100" onclick="applyFilters()">
+                                        <i class="bi bi-search"></i> Aplicar filtros
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Gráfico combinado -->
+                    <div class="chart-container">
+                        <canvas id="combinedChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Historial de Lecturas -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-table"></i>
+                        Tabla de Datos
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped" id="historyTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Fecha y Hora</th>
+                                    <th>Temperatura</th>
+                                    <th>Humedad</th>
+                                    <th>Entry ID</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted">
+                                        Cargando historial...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let updateInterval;
+    const UPDATE_INTERVAL = 15000; // 15 segundos
+    let combinedChart = null;
+    let historicalData = [];
+    
+    // Función para actualizar el indicador de tiempo
+    function updateTimeIndicator() {
+        const now = new Date();
+        const timeString = now.toLocaleTimeString('es-MX');
+        document.getElementById('lastUpdate').textContent = timeString;
+    }
+    
+    // Función para mostrar error
+    function showError(message) {
+        const errorAlert = document.getElementById('errorAlert');
+        const errorMessage = document.getElementById('errorMessage');
+        errorMessage.textContent = message;
+        errorAlert.style.display = 'block';
+        errorAlert.classList.add('show');
+        
+        // Ocultar después de 5 segundos
+        setTimeout(() => {
+            errorAlert.classList.remove('show');
+            setTimeout(() => {
+                errorAlert.style.display = 'none';
+            }, 150);
+        }, 5000);
+    }
+    
+    // Función para obtener el color según el valor del sensor
+    function getSensorColor(sensorName, value) {
+        if (sensorName.toLowerCase().includes('temperatura')) {
+            if (value < 15) return 'primary';
+            if (value < 25) return 'success';
+            if (value < 35) return 'warning';
+            return 'danger';
+        } else if (sensorName.toLowerCase().includes('humedad')) {
+            if (value < 30) return 'danger';
+            if (value < 50) return 'warning';
+            if (value < 70) return 'success';
+            return 'primary';
+        }
+        return 'info';
+    }
+    
+    // Función para renderizar las tarjetas de sensores
+    function renderSensorCards(sensors) {
+        const container = document.getElementById('sensorsContainer');
+        
+        if (!sensors || sensors.length === 0) {
+            container.innerHTML = `
+                <div class="col-12 text-center py-5">
+                    <i class="bi bi-exclamation-circle text-warning" style="font-size: 3rem;"></i>
+                    <p class="text-muted mt-3">No hay datos de sensores disponibles</p>
+                </div>
+            `;
+            return;
+        }
+        
+        container.innerHTML = sensors.map(sensor => {
+            const color = getSensorColor(sensor.name, sensor.value);
+            return `
+                <div class="col-md-6 col-lg-3">
+                    <div class="card sensor-card shadow-sm border-${color} border-2">
+                        <div class="card-body position-relative">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div>
+                                    <h6 class="text-muted mb-0">${sensor.name}</h6>
+                                </div>
+                                <i class="${sensor.icon} sensor-icon text-${color}"></i>
+                            </div>
+                            <div class="sensor-value text-${color}">
+                                ${sensor.value.toFixed(2)}
+                                <span class="fs-5">${sensor.unit}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+    
+    // Función para inicializar los gráficos
+    function initCharts() {
+        const commonOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                },
+            },
+            scales: {
+                x: {
+                    display: true,
+                    title: {
+                        display: true,
+                        text: 'Tiempo'
+                    }
+                },
+                y: {
+                    display: true,
+                    title: {
+                        display: true,
+                        text: 'Valor'
+                    }
+                }
+            }
+        };
+        
+        // Gráfico combinado
+        const ctxCombined = document.getElementById('combinedChart');
+        if (ctxCombined) {
+            combinedChart = new Chart(ctxCombined, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: 'Temperatura (°C)',
+                            data: [],
+                            borderColor: 'rgb(255, 99, 132)',
+                            backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                            tension: 0.4,
+                            yAxisID: 'y',
+                        },
+                        {
+                            label: 'Humedad (%)',
+                            data: [],
+                            borderColor: 'rgb(54, 162, 235)',
+                            backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                            tension: 0.4,
+                            yAxisID: 'y1',
+                        }
+                    ]
+                },
+                options: {
+                    ...commonOptions,
+                    scales: {
+                        x: commonOptions.scales.x,
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Temperatura (°C)'
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: 'Humedad (%)'
+                            },
+                            grid: {
+                                drawOnChartArea: false,
+                            },
+                        },
+                    }
+                }
+            });
+        }
+    }
+    
+    // Función para actualizar los gráficos
+    function updateCharts() {
+        console.log('📊 Actualizando gráficos con datos:', historicalData);
+        
+        if (historicalData.length === 0) {
+            console.warn('⚠️ No hay datos históricos para gráficos');
+            return;
+        }
+        
+        // Actualizar gráfico combinado
+        if (combinedChart) {
+            combinedChart.data.labels = historicalData.map(d => d.time);
+            combinedChart.data.datasets[0].data = historicalData.map(d => d.temperature);
+            combinedChart.data.datasets[1].data = historicalData.map(d => d.humidity);
+            combinedChart.update('none');
+            console.log('✅ Gráfico combinado actualizado');
+        }
+    }
+    
+    // Función para renderizar el historial en tabla
+    function renderHistory() {
+        console.log('📋 Renderizando tabla con:', historicalData.length, 'registros');
+        const tbody = document.querySelector('#historyTable tbody');
+        
+        if (historicalData.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="4" class="text-center text-muted">
+                        No hay datos históricos disponibles
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+        
+        // Mostrar los últimos 10 registros en orden descendente
+        const recentData = [...historicalData].reverse().slice(0, 10);
+        
+        tbody.innerHTML = recentData.map(item => {
+            const formattedDate = item.timestamp.toLocaleString('es-MX');
+            return `
+                <tr>
+                    <td>${formattedDate}</td>
+                    <td>${item.temperature !== null ? item.temperature.toFixed(2) + ' °C' : 'N/A'}</td>
+                    <td>${item.humidity !== null ? item.humidity.toFixed(2) + ' %' : 'N/A'}</td>
+                    <td>#${item.entry_id || 'N/A'}</td>
+                </tr>
+            `;
+        }).join('');
+        
+        console.log('✅ Tabla renderizada con', recentData.length, 'filas');
+    }
+    
+    // Manejar cambio de rango predefinido
+    document.getElementById('dateRangePreset')?.addEventListener('change', function() {
+        const customStart = document.getElementById('customStartDate');
+        const customEnd = document.getElementById('customEndDate');
+        
+        if (this.value === 'custom') {
+            customStart.style.display = 'block';
+            customEnd.style.display = 'block';
+        } else {
+            customStart.style.display = 'none';
+            customEnd.style.display = 'none';
+        }
+    });
+    
+    // Función para aplicar filtros
+    window.applyFilters = function() {
+        console.log('🔍 Aplicando filtros...');
+        fetchSensorData();
+    };
+    
+    // Función para obtener parámetros de filtro
+    function getFilterParams() {
+        const preset = document.getElementById('dateRangePreset')?.value || 'last20';
+        const params = {};
+        
+        const now = new Date();
+        
+        switch(preset) {
+            case 'last20':
+                params.results = 20;
+                break;
+            case 'last50':
+                params.results = 50;
+                break;
+            case 'last100':
+                params.results = 100;
+                break;
+            case 'today':
+                const todayStart = new Date(now.setHours(0, 0, 0, 0));
+                params.start_date = todayStart.toISOString();
+                params.results = 8000;
+                break;
+            case 'yesterday':
+                const yesterdayStart = new Date(now);
+                yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+                yesterdayStart.setHours(0, 0, 0, 0);
+                const yesterdayEnd = new Date(yesterdayStart);
+                yesterdayEnd.setHours(23, 59, 59, 999);
+                params.start_date = yesterdayStart.toISOString();
+                params.end_date = yesterdayEnd.toISOString();
+                params.results = 8000;
+                break;
+            case 'last7days':
+                const last7days = new Date(now);
+                last7days.setDate(last7days.getDate() - 7);
+                params.start_date = last7days.toISOString();
+                params.results = 8000;
+                break;
+            case 'last30days':
+                const last30days = new Date(now);
+                last30days.setDate(last30days.getDate() - 30);
+                params.start_date = last30days.toISOString();
+                params.results = 8000;
+                break;
+            case 'custom':
+                const startInput = document.getElementById('startDate')?.value;
+                const endInput = document.getElementById('endDate')?.value;
+                if (startInput) params.start_date = new Date(startInput).toISOString();
+                if (endInput) params.end_date = new Date(endInput).toISOString();
+                params.results = 8000;
+                break;
+        }
+        
+        console.log('📅 Parámetros de filtro:', params);
+        return params;
+    }
+    
+    // Función principal para obtener y actualizar datos
+    async function fetchSensorData() {
+        try {
+            // Construir URL con parámetros de filtro
+            const filterParams = getFilterParams();
+            const queryString = new URLSearchParams(filterParams).toString();
+            const url = `/catalogs/sensors/api/data/${queryString ? '?' + queryString : ''}`;
+            
+            console.log('🌐 URL de petición:', url);
+            const response = await fetch(url);
+            
+            if (!response.ok) {
+                throw new Error('Error al obtener datos del servidor');
+            }
+            
+            const result = await response.json();
+            console.log('📡 Respuesta del API:', result);
+            
+            if (result.success && result.data) {
+                const data = result.data;
+                console.log('✅ Datos recibidos:', data);
+                console.log('📊 Número de feeds:', data.feeds ? data.feeds.length : 0);
+                
+                // Actualizar información del canal
+                document.getElementById('channelName').textContent = data.channel_name || 'Canal IoT';
+                document.getElementById('channelDescription').textContent = data.description || 'Sin descripción';
+                document.getElementById('channelId').textContent = data.channel_id || 'N/A';
+                
+                // Procesar feeds históricos
+                if (data.feeds && data.feeds.length > 0) {
+                    console.log('📈 Procesando feeds históricos...');
+                    
+                    // Limpiar datos históricos existentes
+                    historicalData = [];
+                    
+                    // Procesar cada feed
+                    data.feeds.forEach(feed => {
+                        const timestamp = new Date(feed.timestamp);
+                        const timeLabel = timestamp.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+                        
+                        historicalData.push({
+                            time: timeLabel,
+                            timestamp: timestamp,
+                            temperature: feed.temperature,
+                            humidity: feed.humidity,
+                            entry_id: feed.entry_id
+                        });
+                    });
+                    
+                    console.log('📋 Datos históricos procesados:', historicalData);
+                    
+                    // Renderizar tarjetas con el último valor
+                    const latestFeed = data.feeds[data.feeds.length - 1];
+                    const sensors = [];
+                    
+                    if (latestFeed.temperature !== null) {
+                        sensors.push({
+                            name: data.field_names?.field1 || 'Temperatura',
+                            value: latestFeed.temperature,
+                            unit: '°C',
+                            icon: 'bi-thermometer-half'
+                        });
+                    }
+                    
+                    if (latestFeed.humidity !== null) {
+                        sensors.push({
+                            name: data.field_names?.field2 || 'Humedad',
+                            value: latestFeed.humidity,
+                            unit: '%',
+                            icon: 'bi-droplet-fill'
+                        });
+                    }
+                    
+                    console.log('🎴 Sensores para tarjetas:', sensors);
+                    renderSensorCards(sensors);
+                    
+                    // Actualizar gráficos
+                    updateCharts();
+                    
+                    // Renderizar historial
+                    renderHistory();
+                    
+                    // Actualizar indicador de tiempo
+                    updateTimeIndicator();
+                } else {
+                    console.warn('⚠️ No hay feeds en los datos');
+                }
+                
+            } else {
+                console.error('❌ Error en respuesta:', result.error);
+                showError(result.error || 'Error al procesar datos de sensores');
+            }
+            
+        } catch (error) {
+            console.error('❌ Error de fetch:', error);
+            showError('Error de conexión con el servidor: ' + error.message);
+        }
+    }
+    
+    // Iniciar actualización automática
+    function startAutoUpdate() {
+        // Inicializar gráficos
+        initCharts();
+        
+        // Hacer la primera carga inmediatamente
+        fetchSensorData();
+        
+        // Configurar actualización periódica
+        updateInterval = setInterval(fetchSensorData, UPDATE_INTERVAL);
+    }
+    
+    // Detener actualización automática
+    function stopAutoUpdate() {
+        if (updateInterval) {
+            clearInterval(updateInterval);
+        }
+    }
+    
+    // Iniciar al cargar la página
+    startAutoUpdate();
+    
+    // Detener al salir de la página
+    window.addEventListener('beforeunload', stopAutoUpdate);
+    
+    // Pausar actualización cuando la pestaña no está visible
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+            stopAutoUpdate();
+        } else {
+            startAutoUpdate();
+        }
+    });
+});
+</script>
+{% endblock %}

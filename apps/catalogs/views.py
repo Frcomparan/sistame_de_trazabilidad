@@ -353,3 +353,57 @@ def campaign_delete_view(request, pk):
         return redirect('campaign_list')
     
     return render(request, 'catalogs/campaign_confirm_delete.html', {'campaign': campaign})
+
+
+# ========== Sensores / IoT Views ==========
+
+from django.http import JsonResponse
+from .sensors import get_thingspeak_service
+
+
+@login_required
+def sensors_dashboard_view(request):
+    """Vista del dashboard de sensores en tiempo real."""
+    # Obtener estaciones disponibles
+    stations = Station.objects.filter(is_operational=True).select_related('field')
+    
+    context = {
+        'stations': stations,
+    }
+    return render(request, 'catalogs/sensors_dashboard.html', context)
+
+
+@login_required
+def sensors_data_api(request):
+    """API para obtener datos de sensores en tiempo real."""
+    try:
+        service = get_thingspeak_service()
+        
+        # Obtener parámetros de la petición
+        results = int(request.GET.get('results', 20))
+        start_date = request.GET.get('start_date')
+        end_date = request.GET.get('end_date')
+        
+        # Obtener datos históricos con filtros opcionales
+        data = service.get_formatted_historical_data(
+            results=results,
+            start_date=start_date,
+            end_date=end_date
+        )
+        
+        if data:
+            return JsonResponse({
+                'success': True,
+                'data': data
+            })
+        else:
+            return JsonResponse({
+                'success': False,
+                'error': 'No se pudieron obtener datos del sensor'
+            }, status=500)
+            
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)

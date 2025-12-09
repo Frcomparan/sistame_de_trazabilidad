@@ -5,7 +5,8 @@ from django.urls import path
 from .views import (
     # Template views
     field_list_view, field_create_view, field_edit_view, field_delete_view,
-    campaign_list_view, campaign_create_view, campaign_edit_view, campaign_delete_view
+    campaign_list_view, campaign_create_view, campaign_edit_view, campaign_delete_view,
+    sensors_dashboard_view, sensors_data_api
 )
 
 urlpatterns = [
@@ -20,5 +21,9 @@ urlpatterns = [
     path('campaigns/create/', campaign_create_view, name='campaign_create'),
     path('campaigns/<uuid:pk>/edit/', campaign_edit_view, name='campaign_edit'),
     path('campaigns/<uuid:pk>/delete/', campaign_delete_view, name='campaign_delete'),
+    
+    # Sensors / IoT
+    path('sensors/', sensors_dashboard_view, name='sensors_dashboard'),
+    path('sensors/api/data/', sensors_data_api, name='sensors_data_api'),
 ]
 

@@ -107,6 +107,11 @@
                             <i class="bi bi-file-earmark-bar-graph"></i> Reportes
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'sensors_dashboard' %}">
+                            <i class="bi bi-wifi"></i> Sensores
+                        </a>
+                    </li>
                     {% if user.is_superuser %}
                     <li class="nav-item">
                         <a class="nav-link" href="/admin/">

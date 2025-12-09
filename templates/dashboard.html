@@ -145,25 +145,22 @@
             </div>
         </div>
 
-        <!-- Estaciones (Próximamente) -->
+        <!-- Sensores IoT -->
         <div class="col-md-6 col-lg-4 mb-4">
-            <div class="card border-0 shadow-sm h-100">
+            <div class="card border-0 shadow-sm h-100 hover-card">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start mb-3">
                         <div>
-                            <i class="bi bi-broadcast text-secondary" style="font-size: 3rem;"></i>
+                            <i class="bi bi-wifi text-info" style="font-size: 3rem;"></i>
                         </div>
-                        <span class="badge bg-secondary">Próximamente</span>
+                        <span class="badge bg-success">Disponible</span>
                     </div>
-                    <h5 class="card-title">Estaciones</h5>
-                    <p class="card-text text-muted">Administra dispositivos y estaciones de monitoreo en los campos.</p>
+                    <h5 class="card-title">Sensores IoT</h5>
+                    <p class="card-text text-muted">Monitoreo en tiempo real de sensores de temperatura y humedad.</p>
                     <div class="d-flex gap-2 mt-3">
-                        <button class="btn btn-secondary btn-sm" disabled>
-                            <i class="bi bi-list-ul"></i> Ver Lista
-                        </button>
-                        <button class="btn btn-outline-secondary btn-sm" disabled>
-                            <i class="bi bi-plus-circle"></i> Crear
-                        </button>
+                        <a href="{% url 'sensors_dashboard' %}" class="btn btn-info btn-sm">
+                            <i class="bi bi-speedometer2"></i> Ver Dashboard
+                        </a>
                     </div>
                 </div>
             </div>

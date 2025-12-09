@@ -30,6 +30,7 @@ openpyxl==3.1.5
 # Utilidades
 python-dotenv==1.0.1
 pytz==2024.2
+requests==2.32.3
 
 # Servidor WSGI
 gunicorn==23.0.0
