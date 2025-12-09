@@ -115,14 +115,14 @@ class Command(BaseCommand):
                     )
                 elif update_existing:
                     # Actualizar campos excepto name
-                        for key, value in event_data.items():
+                    for key, value in event_data.items():
                         if key != 'name':
                             setattr(event_type, key, value)
                     event_type.save()
-                        updated_count += 1
-                        self.stdout.write(
+                    updated_count += 1
+                    self.stdout.write(
                         self.style.WARNING(f'↻ Actualizado: {event_data["name"]}')
-                        )
+                    )
                 else:
                     skipped_count += 1
                     self.stdout.write(
