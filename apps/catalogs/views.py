@@ -227,8 +227,8 @@ from .sensors import get_thingspeak_service
                     'channel_name': 'Trazabilidad',
                     'description': 'Obtención de datos de sensores de temperatura, humedad relativa.',
                     'field_names': {
-                        'field1': 'Temperature',
-                        'field2': 'Humidity'
+                        'field1': 'Temperatura',
+                        'field2': 'Humedad',
                     },
                     'feeds': [
                         {
@@ -365,8 +365,8 @@ class SensorDataAPIView(APIView):
                         'description': 'Obtención de datos de sensores de temperatura, humedad relativa.',
                         'latitude': '0.0',
                         'longitude': '0.0',
-                        'field1': 'Temperature',
-                        'field2': 'Humidity',
+                        'field1': 'Temperatura',
+                        'field2': 'Humedad',
                         'created_at': '2025-11-01T18:37:44Z',
                         'updated_at': '2025-11-15T14:21:09Z',
                         'last_entry_id': 306
